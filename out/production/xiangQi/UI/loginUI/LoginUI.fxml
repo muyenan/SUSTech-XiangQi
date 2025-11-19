@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="500" prefWidth="800"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="UI.loginUI.LoginController"
+            stylesheets="@../../Resource/style.css">
+    <left>
+        <StackPane prefWidth="450">
+            <Canvas fx:id="goBoardCanvas" height="500.0" width="450" StackPane.alignment="CENTER" />
+            <ImageView fitHeight="500.0" fitWidth="480.0">
+                <image>
+                    <Image url="@../../Resource/chessboard.png" />
+                </image>
+            </ImageView>
+        </StackPane>
+    </left>
+    <center>
+        <VBox alignment="CENTER" prefWidth="350" spacing="15">
+            <padding>
+                <Insets bottom="40" left="40" right="40" top="40" />
+            </padding>
+            <Label text="妮可象棋" styleClass="title-label"/>
+            <TextField fx:id="userNameTextField"
+                       prefHeight="35" prefWidth="220.0"
+                       promptText="用户名"
+                       styleClass="input-field"/>
+            <PasswordField fx:id="passwordTextField"
+                           prefHeight="35" prefWidth="220"
+                           promptText="密码"
+                           styleClass="input-field"/>
+            <HBox alignment="CENTER_RIGHT" prefHeight="15.0" prefWidth="200.0">
+                <children>
+                    <CheckBox fx:id="autoLoginCheckBox"
+                              mnemonicParsing="false"
+                              text="自动登录"
+                              style="-fx-font-family: FangSong_GB2312; -fx-font-size: 10px;" />
+                </children>
+            </HBox>
+            <Button fx:id="loginButton" onAction="#handleLogin"
+                    prefHeight="35" prefWidth="220"
+                    text="登录"
+                    styleClass="hint-button1"/>
+            <Button fx:id="signUpButton" onAction="#handleSignUp"
+                    prefHeight="35" prefWidth="220"
+                    text="注册"
+                    styleClass="hint-button2"/>
+            <Button fx:id="touristVisitButton" onAction="#handleTouristVisit"
+                    prefHeight="35" prefWidth="220"
+                    text="游客访问"
+                    styleClass="hint-button3"/>
+            <Hyperlink fx:id="findPasswordButton"
+                       onAction="#handleFindPassword"
+                       text="找回密码"
+                       styleClass="hint-link"/>
+        </VBox>
+    </center>
+</BorderPane>

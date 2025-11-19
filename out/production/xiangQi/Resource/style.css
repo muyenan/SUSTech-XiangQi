@@ -1,0 +1,106 @@
+/* 大标题字体：段宁行书 */
+.title-label {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-font-size: 45px;
+}
+
+/* 输入框字体：仿宋 */
+.input-field {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 14px;
+}
+
+/* 按钮字体 */
+/* 棕色 */
+.hint-button1 {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-background-color: #8b4513;;
+    -fx-background-radius: 8px;
+}
+/* 黄色 */
+.hint-button2 {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-background-color: #d9a066;
+    -fx-background-radius: 8px;
+}
+.hint-button3 {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-background-color: #c0c0c0;
+    -fx-text-fill: black;
+    -fx-background-radius: 8px;
+}
+
+/* 超链接字体 */
+.hint-link {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+/* 警告界面专用 */
+.warning-title {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 36px;
+    -fx-text-fill: #8b4513;
+}
+
+.warning-text {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 18px;
+    -fx-text-fill: #5e3b20;
+}
+
+.input-field-large {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 24px;
+}
+
+.input-field-small {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 12px;
+}
+
+/* 游戏界面欢迎标签 */
+.welcome-label {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 24px;
+}
+
+/* 游戏界面回合标签 */
+.turn-label {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 18px;
+}
+
+/* 游戏界面信息标签 */
+.info-label {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 12px;
+}
+
+/* 游戏界面大按钮 */
+.game-button-large {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-font-size: 16px;
+}
+
+/* 游戏界面中按钮 */
+.game-button-medium {
+    -fx-font-family: "DuanNingXingShu";
+    -fx-font-size: 15px;
+}
+
+/* 游戏界面标签 */
+.game-label {
+    -fx-font-family: "FangSong_GB2312";
+    -fx-font-size: 18px;
+}
+
+/* 游戏界面列表视图 */
+.game-listview {
+    -fx-font-family: "FangSong_GB2312";
+}

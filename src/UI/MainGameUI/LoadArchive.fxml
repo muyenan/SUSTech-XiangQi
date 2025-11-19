@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="500" prefWidth="800" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.MainGameUI.LoadArchiveController" stylesheets="@../../Resource/style.css">
+    <left>
+        <StackPane prefWidth="450">
+            <Canvas fx:id="previewChessBoardCanvas" height="500" width="480.0" StackPane.alignment="CENTER" />
+        </StackPane>
+    </left>
+    <center>
+        <StackPane alignment="TOP_CENTER" prefWidth="350">
+            <VBox alignment="TOP_CENTER" spacing="20" style="-fx-background-color: rgba(255,255,255,0.85); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 3);">
+                <padding>
+                    <Insets bottom="20" left="20" right="20" top="20" />
+                </padding>
+                <HBox alignment="TOP_LEFT" spacing="15">
+                    <ImageView fx:id="AvatarImageView" fitHeight="64" fitWidth="64" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0.3, 0, 2);">
+                        <image>
+                            <Image url="@../../Resource/DefaultAvatar.png" />
+                        </image>
+                    </ImageView>
+                    <Label fx:id="welcomeLabel" text="欢迎，玩家" wrapText="true" styleClass="welcome-label"/>
+                </HBox>
+                <Label text="选择存档" textFill="RED" styleClass="game-label"/>
+                <ListView fx:id="saveFilesListView" prefHeight="200" prefWidth="280" styleClass="game-listview"/>
+                <VBox alignment="CENTER" prefWidth="280" spacing="15">
+                    <Button fx:id="loadButton" onAction="#handleLoad" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" text="加载存档" styleClass="game-button-large"/>
+                    <Button fx:id="cancelButton" onAction="#handleCancel" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="取消" styleClass="game-button-medium"/>
+                </VBox>
+                <Region prefHeight="20" />
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>
