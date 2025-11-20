@@ -316,6 +316,11 @@ public class HistoryArchiveController {
                         // 选择下一个项目或清空选择
                         if (!saveFilesListView.getItems().isEmpty()) {
                             saveFilesListView.getSelectionModel().select(0);
+                            // 手动触发预览更新
+                            String nextSelected = saveFilesListView.getSelectionModel().getSelectedItem();
+                            if (nextSelected != null) {
+                                previewSelectedSave(nextSelected);
+                            }
                         }
                     } else {
                         showAlert("错误", "存档删除失败！");

@@ -143,6 +143,28 @@ public class MainGameController {
 
         chessBoardCanvas.setOnMouseClicked(this::handleCanvasClick);
 
+        // 为注册用户创建初始存档
+        if (userValidationId != null && !userValidationId.isEmpty()) {
+            String passwordHash = getUserPasswordHash();
+            if (passwordHash != null && !passwordHash.isEmpty()) {
+                GameArchiveManager archiveManager = new GameArchiveManager(currentUserName, passwordHash);
+                // 只有在当前没有加载存档文件时才创建初始存档
+                if (currentSaveFileName == null || currentSaveFileName.isEmpty()) {
+                    boolean success = archiveManager.saveGame(pieces, gameMoves);
+                    if (success) {
+                        // 获取刚创建的存档文件名
+                        List<GameArchiveManager.SaveFileInfo> saveFiles = archiveManager.getSaveFiles();
+                        if (!saveFiles.isEmpty()) {
+                            currentSaveFileName = saveFiles.get(0).getFileName();
+                            System.out.println("初始存档创建成功: " + currentSaveFileName);
+                        }
+                    } else {
+                        System.err.println("初始存档创建失败");
+                    }
+                }
+            }
+        }
+
         // 显示头像
         try {
             if (userValidationId != null && !userValidationId.isEmpty()) {
@@ -266,6 +288,9 @@ public class MainGameController {
                 clearValidMoves(); // 清除可移动位置
                 drawBoard();
                 drawPieces();
+                
+                // 每次移动后自动保存游戏
+                autoSaveGame();
             }
         }
     }
@@ -324,6 +349,42 @@ public class MainGameController {
                 .filter(p -> p != null && p.x == x && p.y == y)
                 .findFirst()
                 .orElse(null);
+    }
+
+    // 自动保存游戏
+    private void autoSaveGame() {
+        // 仅对注册用户自动保存
+        if (sessionIdentifier == null || sessionIdentifier.isEmpty()) {
+            return;
+        }
+
+        String passwordHash = getUserPasswordHash();
+        if (passwordHash == null || passwordHash.isEmpty()) {
+            return;
+        }
+
+        GameArchiveManager archiveManager = new GameArchiveManager(currentUserName, passwordHash);
+        boolean success;
+        
+        // 如果当前有加载的存档文件，则更新该文件，否则创建新文件
+        if (currentSaveFileName != null && !currentSaveFileName.isEmpty()) {
+            success = archiveManager.updateGame(currentSaveFileName, pieces, gameMoves);
+        } else {
+            success = archiveManager.saveGame(pieces, gameMoves);
+            // 如果是新创建的存档，更新currentSaveFileName
+            if (success) {
+                List<GameArchiveManager.SaveFileInfo> saveFiles = archiveManager.getSaveFiles();
+                if (!saveFiles.isEmpty()) {
+                    currentSaveFileName = saveFiles.get(0).getFileName();
+                }
+            }
+        }
+
+        if (success) {
+            System.out.println("游戏自动保存成功");
+        } else {
+            System.err.println("游戏自动保存失败");
+        }
     }
 
     // 绘制棋盘
@@ -509,10 +570,12 @@ public class MainGameController {
         }
 
         if (success) {
-            // 静默保存，不显示提示
+            // 显示保存成功提示
+            showAlert("提示", "游戏保存成功");
             System.out.println("游戏保存成功");
         } else {
-            // 静默返回，不提示错误
+            // 显示保存失败提示
+            showAlert("错误", "游戏保存失败");
             System.err.println("保存失败");
         }
     }
