@@ -244,6 +244,7 @@ public class MainGameController {
         }
 
         ChessPiece clickedPiece = getPieceAt(clickedX, clickedY);
+        boolean moved = false; // 标记是否发生了实际移动
 
         if (selectedPiece == null) {
             // 没有选中棋子，尝试选中
@@ -279,6 +280,7 @@ public class MainGameController {
                 if (validMoves[clickedX][clickedY]) { // 只有当位置有效时才移动
                     makeMove(selectedPiece, clickedX, clickedY);
                     switchTurn();
+                    moved = true; // 标记发生了实际移动
                 } else {
                     System.out.println("非法移动!");
                 }
@@ -289,8 +291,10 @@ public class MainGameController {
                 drawBoard();
                 drawPieces();
                 
-                // 每次移动后自动保存游戏
-                autoSaveGame();
+                // 只有在实际发生了移动时才自动保存游戏
+                if (moved) {
+                    autoSaveGame();
+                }
             }
         }
     }
