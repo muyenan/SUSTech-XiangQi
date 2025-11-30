@@ -22,7 +22,6 @@ import java.io.InputStream;
 
 
 import UI.Models.GameArchiveManager;
-import UI.MainGameUI.ChessPiece;
 
 import static UI.MainUI.MainController.getSessionIdentifier;
 import static UI.MainUI.MainController.getUserName;
@@ -60,6 +59,14 @@ public class LoadArchiveController {
     // 用于存储自定义加载的字体
     private Font redPieceFont;
     private Font blackPieceFont;
+    
+    private static final int ROWS = 10;
+    private static final int COLS = 9;
+    private static final int CELL_SIZE = 50;
+    private double offsetX;
+    private double offsetY;
+    private final Color RED_COLOR = Color.web("#8B0000");
+
 
     public void setMainGameController(MainGameController controller) {
         this.mainGameController = controller;
@@ -100,6 +107,12 @@ public class LoadArchiveController {
         redPieceFont = loadCustomFont("fonts/HanYiWeiBeiJian-1.ttf", 26);
         blackPieceFont = loadCustomFont("fonts/HanYiWeiBeiFan-1.ttf", 26);
         
+        // 计算棋盘偏移量
+        int boardWidth = (COLS - 1) * CELL_SIZE;
+        int boardHeight = (ROWS - 1) * CELL_SIZE;
+        offsetX = (previewChessBoardCanvas.getWidth() - boardWidth) / 2.0;
+        offsetY = (previewChessBoardCanvas.getHeight() - boardHeight) / 2.0;
+        
         // 默认选择第一个存档进行预览
         if (!saveFilesListView.getItems().isEmpty()) {
             saveFilesListView.getSelectionModel().select(0);
@@ -138,38 +151,40 @@ public class LoadArchiveController {
 
     private void drawPreviewBoard() {
         if (currentPreviewPieces == null) return;
-
+        drawBoard();
+        drawPieces();
+    }
+    
+    private void drawBoard() {
         GraphicsContext gc = previewChessBoardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, previewChessBoardCanvas.getWidth(), previewChessBoardCanvas.getHeight());
-
-        // 常量定义
-        int ROWS = 10;
-        int COLS = 9;
-        int CELL_SIZE = 50;
         
-        // 计算棋盘偏移量 (用于居中 Canvas)
-        int boardWidth = (COLS - 1) * CELL_SIZE;
-        int boardHeight = (ROWS - 1) * CELL_SIZE;
-        double offsetX = (previewChessBoardCanvas.getWidth() - boardWidth) / 2.0;
-        double offsetY = (previewChessBoardCanvas.getHeight() - boardHeight) / 2.0;
-
-        // 绘制棋盘
-        gc.setStroke(Color.BLACK);
-        gc.setLineWidth(2);
+        Color boardColor = Color.web("#eecfa1");
+        Color lineColor = Color.web("#5c4033");
 
         // 背景色
-        gc.setFill(Color.rgb(220, 179, 92));
+        gc.setFill(boardColor);
+        gc.fillRect(0, 0, previewChessBoardCanvas.getWidth(), previewChessBoardCanvas.getHeight());
+
+        // 棋盘区域背景
+        int boardWidth = (COLS - 1) * CELL_SIZE;
+        int boardHeight = (ROWS - 1) * CELL_SIZE;
+        gc.setFill(boardColor);
         gc.fillRect(offsetX, offsetY, boardWidth, boardHeight);
+
+        gc.setStroke(lineColor);
 
         // 横线
         for (int i = 0; i < ROWS; i++) {
             double y = i * CELL_SIZE + offsetY;
+            gc.setLineWidth((i == 0 || i == ROWS - 1) ? 3 : 2);
             gc.strokeLine(offsetX, y, boardWidth + offsetX, y);
         }
 
         // 竖线
         for (int i = 0; i < COLS; i++) {
             double x = i * CELL_SIZE + offsetX;
+            gc.setLineWidth((i == 0 || i == COLS - 1) ? 3 : 2);
             if (i == 0 || i == COLS - 1) {
                 gc.strokeLine(x, offsetY, x, boardHeight + offsetY);
             } else {
@@ -177,27 +192,68 @@ public class LoadArchiveController {
                 gc.strokeLine(x, 5 * CELL_SIZE + offsetY, x, boardHeight + offsetY);
             }
         }
-
+        
+        gc.setLineWidth(2);
         // 九宫格
         gc.strokeLine(3 * CELL_SIZE + offsetX, 7 * CELL_SIZE + offsetY, 5 * CELL_SIZE + offsetX, 9 * CELL_SIZE + offsetY);
         gc.strokeLine(5 * CELL_SIZE + offsetX, 7 * CELL_SIZE + offsetY, 3 * CELL_SIZE + offsetX, 9 * CELL_SIZE + offsetY);
-        gc.strokeLine(3 * CELL_SIZE + offsetX, 0 * CELL_SIZE + offsetY, 5 * CELL_SIZE + offsetX, 2 * CELL_SIZE + offsetY);
-        gc.strokeLine(5 * CELL_SIZE + offsetX, 0 * CELL_SIZE + offsetY, 3 * CELL_SIZE + offsetX, 2 * CELL_SIZE + offsetY);
+        gc.strokeLine(3 * CELL_SIZE + offsetX, offsetY, 5 * CELL_SIZE + offsetX, 2 * CELL_SIZE + offsetY);
+        gc.strokeLine(5 * CELL_SIZE + offsetX, offsetY, 3 * CELL_SIZE + offsetX, 2 * CELL_SIZE + offsetY);
 
         // 楚河汉界
-        gc.setFill(Color.BLACK);
-        gc.setFont(Font.font("FangSong_GB2312", 24));
+        gc.setFill(lineColor);
+        gc.setFont(Font.font("KaiTi", 24));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
-
-        // 棋盘中线的X坐标 (第4列)
-        double centerX = 4.0 * CELL_SIZE + offsetX;
-        // 楚河汉界的Y坐标 (4.5行)
         double textY = 4.5 * CELL_SIZE + offsetY;
+        gc.fillText("楚 河", 2 * CELL_SIZE + offsetX, textY);
+        gc.fillText("汉 界", 6 * CELL_SIZE + offsetX, textY);
 
-        gc.fillText("楚 河 汉 界", centerX, textY);
+        // 炮/兵 的标记点
+        int[][] markerCoords = {
+            {2,1}, {2,7}, // 黑炮
+            {3,0}, {3,2}, {3,4}, {3,6}, {3,8}, // 黑卒
+            {6,0}, {6,2}, {6,4}, {6,6}, {6,8}, // 红兵
+            {7,1}, {7,7}  // 红炮
+        };
+        for (int[] coord : markerCoords) {
+            drawMarker(gc, coord[1], coord[0]);
+        }
+    }
 
-        // 绘制棋子
+    private void drawMarker(GraphicsContext gc, int col, int row) {
+        double x = col * CELL_SIZE + offsetX;
+        double y = row * CELL_SIZE + offsetY;
+        double gap = 5;
+        double len = 15;
+        
+        gc.setLineWidth(2);
+        gc.setStroke(Color.web("#5c4033"));
+
+        // Top-Left
+        if (col > 0) {
+            gc.strokeLine(x - gap, y - gap, x - gap - len, y - gap);
+            gc.strokeLine(x - gap, y - gap, x - gap, y - gap - len);
+        }
+        // Top-Right
+        if (col < COLS - 1) {
+            gc.strokeLine(x + gap, y - gap, x + gap + len, y - gap);
+            gc.strokeLine(x + gap, y - gap, x + gap, y - gap - len);
+        }
+        // Bottom-Left
+        if (col > 0) {
+            gc.strokeLine(x - gap, y + gap, x - gap - len, y + gap);
+            gc.strokeLine(x - gap, y + gap, x - gap, y + gap + len);
+        }
+        // Bottom-Right
+        if (col < COLS - 1) {
+            gc.strokeLine(x + gap, y + gap, x + gap + len, y + gap);
+            gc.strokeLine(x + gap, y + gap, x + gap, y + gap + len);
+        }
+    }
+
+    private void drawPieces() {
+        GraphicsContext gc = previewChessBoardCanvas.getGraphicsContext2D();
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         double radius = 22;
@@ -209,26 +265,23 @@ public class LoadArchiveController {
             double y = p.y * CELL_SIZE + offsetY;
 
             // 绘制棋子背景圆
-            gc.setFill(Color.LIGHTYELLOW);
+            gc.setFill(Color.web("#fdf5e6"));
             gc.fillOval(x - radius, y - radius, 2 * radius, 2 * radius);
 
             // 绘制棋子边框
-            gc.setStroke(Color.BLACK);
+            Color pieceColor = p.color.equals("RED") ? RED_COLOR : Color.BLACK;
+            gc.setStroke(pieceColor);
             gc.setLineWidth(2);
             gc.strokeOval(x - radius, y - radius, 2 * radius, 2 * radius);
+            
+            // 绘制内圈
+            gc.setLineWidth(1);
+            gc.strokeOval(x - radius + 3, y - radius + 3, 2 * radius - 6, 2 * radius - 6);
 
             // 绘制棋子文字
-            if (p.color.equals("RED")) {
-                gc.setFill(Color.RED);
-                // 使用预加载的红方字体
-                gc.setFont(redPieceFont);
-            } else {
-                gc.setFill(Color.BLACK);
-                // 使用预加载的黑方字体
-                gc.setFont(blackPieceFont);
-            }
-
-            gc.fillText(p.type, x, y + 2); // 微调 Y 坐标
+            gc.setFill(pieceColor);
+            gc.setFont(p.color.equals("RED") ? redPieceFont : blackPieceFont);
+            gc.fillText(p.type, x, y);
         }
     }
 

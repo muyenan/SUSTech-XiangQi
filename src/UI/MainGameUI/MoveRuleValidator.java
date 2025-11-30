@@ -42,7 +42,7 @@ public class MoveRuleValidator {
         // 2. 调用特定棋子的移动规则
         return switch (movingPiece.type) {
             case "将", "帅" -> isValidGeneralMove(movingPiece, endX, endY);
-            case "士" -> isValidAdvisorMove(movingPiece, endX, endY);
+            case "士", "仕" -> isValidAdvisorMove(movingPiece, endX, endY);
             case "象", "相" -> isValidElephantMove(movingPiece, endX, endY);
             case "车", "車" -> isValidChariotMove(movingPiece, endX, endY);
             case "马", "馬" -> isValidHorseMove(movingPiece, endX, endY);
@@ -234,21 +234,21 @@ public class MoveRuleValidator {
 
     private boolean isValidPawnMove(ChessPiece piece, int endX, int endY) {
         int dx = Math.abs(endX - piece.x);
-        int dy = endY - piece.y; // 使用非绝对值，因为兵只能向前或平走
+        int dyAbs = Math.abs(endY - piece.y);
 
         // 1. 兵卒不能后退
         if (piece.color.equals("RED")) {
-            if (dy > 0) return false; // 红方 y 坐标减小是前进 (9->0)
+            if (endY > piece.y) return false; // 红方 y 坐标减小是前进 (9->0)
         } else { // BLACK
-            if (dy < 0) return false; // 黑方 y 坐标增大是前进 (0->9)
+            if (endY < piece.y) return false; // 黑方 y 坐标增大是前进 (0->9)
         }
 
         // 2. 只能走一步
-        if (!((dx == 1 && dy == 0) || (dx == 0 && Math.abs(dy) == 1))) {
+        if (!((dx == 1 && dyAbs == 0) || (dx == 0 && dyAbs == 1))) {
             return false;
         }
 
-        // 3. 过河前的限制：只能直走 (dy != 0)
+        // 3. 过河前的限制：只能直走
         boolean hasCrossedRiver;
         if (piece.color.equals("RED")) {
             hasCrossedRiver = piece.y <= 4;
@@ -258,10 +258,10 @@ public class MoveRuleValidator {
 
         if (!hasCrossedRiver) {
             // 未过河，不能横走
-            return dx == 0;
+            if (dx != 0) return false;
         }
 
-        // 已过河，可以直走或横走一步
-        return (dx == 1 && dy == 0) || (dx == 0 && Math.abs(dy) == 1);
+        // 已过河或未过河直走，都是有效移动
+        return true;
     }
 }

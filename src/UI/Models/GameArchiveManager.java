@@ -60,7 +60,7 @@ public class GameArchiveManager {
         return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 
-    public boolean saveGame(ChessPiece[] pieces, List<GameMove> moves) {
+    public boolean saveGame(ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor) {
         if (encryptionKeyBasis == null || encryptionKeyBasis.isEmpty()) {
             System.err.println("存档失败：加密密钥基础 (密码哈希) 为空。");
             return false;
@@ -68,13 +68,15 @@ public class GameArchiveManager {
 
         String saveDir = getUserSaveDir(username);
         File dirFile = new File(saveDir);
-        if (!dirFile.exists()) dirFile.mkdirs();
+        if (!dirFile.exists()) {
+            dirFile.mkdirs();
+        }
 
         String fileName = "save_" + System.currentTimeMillis() + ".json";
         File saveFile = new File(saveDir, fileName);
 
         // 创建存档数据对象
-        GameArchiveData archiveData = new GameArchiveData(pieces, moves);
+        GameArchiveData archiveData = new GameArchiveData(pieces, moves, currentPlayerColor);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonText = gson.toJson(archiveData);
@@ -109,20 +111,8 @@ public class GameArchiveManager {
             String jsonText = decrypt(encryptedData);
             Gson gson = new Gson();
             
-            // 先尝试解析新的存档格式
-            try {
-                return gson.fromJson(jsonText, GameArchiveData.class);
-            } catch (Exception newFormatException) {
-                // 如果失败，尝试解析旧的存档格式（仅棋子数据）
-                try {
-                    ChessPiece[] pieces = gson.fromJson(jsonText, ChessPiece[].class);
-                    // 对于旧存档，创建一个空的移动历史记录
-                    return new GameArchiveData(pieces, new ArrayList<>());
-                } catch (Exception oldFormatException) {
-                    System.err.println("加载或解密游戏数据时出错 (可能密钥错误): " + oldFormatException.getMessage());
-                    return null;
-                }
-            }
+            return gson.fromJson(jsonText, GameArchiveData.class);
+
         } catch (Exception e) {
             System.err.println("加载或解密游戏数据时出错 (可能密钥错误): " + e.getMessage());
             return null;
@@ -137,50 +127,53 @@ public class GameArchiveManager {
 
         if (files == null) return new ArrayList<>();
 
-        return Arrays.stream(files)
-                .map(file -> {
-                    long timestamp = 0;
-                    try {
-                        String name = file.getName().replace("save_", "").replace(".json", "");
-                        timestamp = Long.parseLong(name);
-                    } catch (NumberFormatException ignored) {
-                    }
-                    return new SaveFileInfo(file.getName(), file.lastModified(), timestamp);
-                })
-                .filter(info -> info.getTimestamp() > 0)
-                .sorted((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp())) // 按时间倒序
-                .collect(Collectors.toList());
+        List<SaveFileInfo> saveFileInfos = new ArrayList<>();
+        for (File file : files) {
+            try {
+                GameArchiveData data = loadGame(file.getName());
+                if (data != null) {
+                    saveFileInfos.add(new SaveFileInfo(file.getName(), data.lastMoveTimestamp));
+                }
+            } catch (Exception e) {
+                // Ignore files that can't be parsed
+            }
+        }
+
+        // 按时间倒序
+        saveFileInfos.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+        return saveFileInfos;
     }
 
     // 存档数据结构类
     public static class GameArchiveData {
         public ChessPiece[] pieces;
         public List<GameMove> moves;
+        public String currentPlayerColor;
+        public long lastMoveTimestamp;
 
-        public GameArchiveData() {
-            // 无参构造函数供Gson使用
-        }
-
-        public GameArchiveData(ChessPiece[] pieces, List<GameMove> moves) {
+        public GameArchiveData(ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor) {
             this.pieces = pieces;
             this.moves = moves;
+            this.currentPlayerColor = currentPlayerColor;
+            if (moves != null && !moves.isEmpty()) {
+                this.lastMoveTimestamp = moves.get(moves.size() - 1).timestamp;
+            } else {
+                this.lastMoveTimestamp = System.currentTimeMillis();
+            }
         }
     }
 
     public static class SaveFileInfo {
         private final String fileName;
-        private final long lastModified;
         private final long timestamp;
 
-        public SaveFileInfo(String fileName, long lastModified, long timestamp) {
+        public SaveFileInfo(String fileName, long timestamp) {
             this.fileName = fileName;
-            this.lastModified = lastModified;
             this.timestamp = timestamp;
         }
 
         public String getFileName() { return fileName; }
         public long getTimestamp() { return timestamp; }
-        public long getLastModified() { return lastModified; }
 
         public String getDisplayName() {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -191,12 +184,14 @@ public class GameArchiveManager {
     public static String getUserSaveDir(String username) {
         String appPath = getAppPath();
         File userDir = new File(appPath, "Accounts/" + username + "/Saves");
-        if (!userDir.exists()) userDir.mkdirs();
+        if (!userDir.exists()) {
+            userDir.mkdirs();
+        }
         return userDir.getAbsolutePath();
     }
 
     // 新增方法：更新已有的存档文件
-    public boolean updateGame(String fileName, ChessPiece[] pieces, List<GameMove> moves) {
+    public boolean updateGame(String fileName, ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor) {
         if (encryptionKeyBasis == null || encryptionKeyBasis.isEmpty()) {
             System.err.println("存档失败：加密密钥基础 (密码哈希) 为空。");
             return false;
@@ -206,7 +201,7 @@ public class GameArchiveManager {
         File saveFile = new File(saveDir, fileName);
 
         // 创建存档数据对象
-        GameArchiveData archiveData = new GameArchiveData(pieces, moves);
+        GameArchiveData archiveData = new GameArchiveData(pieces, moves, currentPlayerColor);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonText = gson.toJson(archiveData);

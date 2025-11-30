@@ -12,39 +12,63 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="500" prefWidth="770" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.MainGameUI.MainGameController" stylesheets="@../../Resource/style.css">
-    <left>
-        <StackPane prefWidth="450">
-            <Canvas fx:id="chessBoardCanvas" height="500" width="480.0" StackPane.alignment="CENTER" />
-        </StackPane>
-    </left>
-    <center>
-        <StackPane alignment="TOP_CENTER" prefWidth="320">
-            <VBox alignment="TOP_CENTER" spacing="20" style="-fx-background-color: rgba(255,255,255,0.85);                          -fx-background-radius: 15;                          -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 3);">
-                <padding>
-                    <Insets bottom="20" left="20" right="20" top="20" />
-                </padding>
-                <HBox alignment="TOP_LEFT" spacing="15">
-                    <ImageView fx:id="AvatarImageView" fitHeight="64" fitWidth="64" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0.3, 0, 2);">
-                        <image>
-                            <Image url="@../../Resource/DefaultAvatar.png" />
-                        </image>
-                    </ImageView>
-                    <Label fx:id="welcomeLabel" text="欢迎，玩家" wrapText="true" styleClass="welcome-label"/>
-                </HBox>
-                <Label fx:id="turnLabel" text="当前回合: 正在初始化..." textFill="RED" styleClass="turn-label"/>
-                <VBox alignment="CENTER_LEFT" prefWidth="280" spacing="10">
-                    <Label fx:id="SignUpLabel" text="注册时间：" wrapText="true" styleClass="info-label"/>
-                    <Label fx:id="LastLoginLabel" text="上次登录：" wrapText="true" styleClass="info-label"/>
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.MainGameUI.MainGameController" stylesheets="@../../Resource/style.css">
+    <BorderPane prefHeight="500" prefWidth="770">
+        <left>
+            <StackPane prefWidth="450">
+                <Canvas fx:id="chessBoardCanvas" height="500" width="480.0" StackPane.alignment="CENTER" />
+            </StackPane>
+        </left>
+        <center>
+            <StackPane alignment="TOP_CENTER" prefWidth="320">
+                <VBox alignment="TOP_CENTER" spacing="20" style="-fx-background-color: rgba(255,255,255,0.85); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 3);">
+                    <padding>
+                        <Insets bottom="20" left="20" right="20" top="20" />
+                    </padding>
+                    <HBox alignment="TOP_LEFT" spacing="15">
+                        <ImageView fx:id="AvatarImageView" fitHeight="64" fitWidth="64" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0.3, 0, 2);">
+                            <image>
+                                <Image url="@../../Resource/DefaultAvatar.png" />
+                            </image>
+                        </ImageView>
+                        <Label fx:id="welcomeLabel" text="欢迎，玩家" wrapText="true" styleClass="welcome-label"/>
+                    </HBox>
+                    <Label fx:id="turnLabel" text="当前回合: 正在初始化..." textFill="RED" styleClass="turn-label"/>
+                    <VBox alignment="CENTER_LEFT" prefWidth="280" spacing="10">
+                        <Label fx:id="SignUpLabel" text="注册时间：" wrapText="true" styleClass="info-label"/>
+                        <Label fx:id="LastLoginLabel" text="上次登录：" wrapText="true" styleClass="info-label"/>
+                    </VBox>
+                    <Region prefHeight="20" />
+                    <VBox alignment="CENTER" prefWidth="280" spacing="15">
+                        <Button onAction="#handleSaveGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" text="保存游戏" styleClass="game-button-large"/>
+                        <Button onAction="#handleLoadGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" text="加载存档" styleClass="game-button-large"/>
+                        <Button onAction="#handleUndoMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #a9a9a9; -fx-text-fill: white; -fx-background-radius: 8;" text="悔棋" styleClass="game-button-large"/>
+                        <Button fx:id="BackMainButton" onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="返回主界面" styleClass="game-button-medium"/>
+                    </VBox>
+                    <Region prefHeight="20" />
                 </VBox>
-                <Region prefHeight="20" />
-                <VBox alignment="CENTER" prefWidth="280" spacing="15">
-                    <Button onAction="#handleSaveGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" text="保存游戏" styleClass="game-button-large"/>
-                    <Button onAction="#handleLoadGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" text="加载存档" styleClass="game-button-large"/>
-                    <Button fx:id="BackMainButton" onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="返回主界面" styleClass="game-button-medium"/>
+            </StackPane>
+        </center>
+    </BorderPane>
+
+    <!-- Victory Overlay -->
+    <StackPane fx:id="victoryOverlayPane" visible="false" styleClass="victory-pane">
+        <StackPane styleClass="victory-container" maxWidth="600" maxHeight="300">
+            <VBox styleClass="victory-inner-container" alignment="CENTER" spacing="25">
+                <!-- Watermark -->
+                <Label text="胜" styleClass="victory-watermark" StackPane.alignment="CENTER" />
+                <!-- Content -->
+                <VBox alignment="CENTER" spacing="30">
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label fx:id="victoryLabel" text="红方获胜" styleClass="victory-title" />
+                        <Region prefHeight="4" prefWidth="150" style="-fx-background-color: linear-gradient(to right, transparent, #8b5a2b, transparent);" />
+                    </VBox>
+                    <HBox alignment="CENTER" spacing="25">
+                        <Button fx:id="replayButton" onAction="#handleReplay" prefHeight="40" prefWidth="180" text="查看回放" styleClass="victory-button" />
+                        <Button onAction="#handleClose" prefHeight="40" prefWidth="180" text="返回主菜单" styleClass="victory-button-close" />
+                    </HBox>
                 </VBox>
-                <Region prefHeight="20" />
             </VBox>
         </StackPane>
-    </center>
-</BorderPane>
+    </StackPane>
+</StackPane>

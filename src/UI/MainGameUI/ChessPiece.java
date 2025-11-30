@@ -14,6 +14,14 @@ public class ChessPiece {
         this.y = y;
     }
 
+    // 拷贝构造函数
+    public ChessPiece(ChessPiece other) {
+        this.type = other.type;
+        this.color = other.color;
+        this.x = other.x;
+        this.y = other.y;
+    }
+
     // 方便调试
     @Override
     public String toString() {

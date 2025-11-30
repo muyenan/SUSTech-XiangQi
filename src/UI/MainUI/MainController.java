@@ -22,6 +22,8 @@ import java.util.Properties;
 import static UI.Models.GetAppPath.getAppPath;
 import static UI.Models.ShowAlert.showAlert;
 import static UI.Models.SaveUsers.users; // 导入 SaveUsers 的 users 属性
+import UI.Models.LoginState; // 导入 LoginState 类
+import UI.Models.GetAppPath; // 导入 GetAppPath 类
 
 public class MainController {
     @FXML
@@ -117,6 +119,24 @@ public class MainController {
     private void handleLogOut() {
         try {
             System.out.println("用户登出");
+            
+            // 清除用户会话信息
+            username = null;
+            sessionIdentifier = null;
+            lastLoginTime = null;
+            passwordHashForEncryption = null;
+
+            // 清除自动登录状态
+            LoginState.clearState();
+
+            // 检查 login_state.properties 文件是否存在
+            File loginStateFile = new File(GetAppPath.getAppPath() + "/login_state.properties");
+            if (loginStateFile.exists()) {
+                System.out.println("警告：login_state.properties 文件在 clearState() 后仍然存在！");
+            } else {
+                System.out.println("信息：login_state.properties 文件已成功删除。");
+            }
+            
             Stage currentStage = (Stage) LogOutLink.getScene().getWindow();
             currentStage.close();
 
