@@ -1,7 +1,12 @@
 package UI.MainUI;
 
+import UI.MainGameUI.GameMove;
 import UI.MainGameUI.MainGameLauncher;
+import UI.Models.AudioModel;
 import UI.Models.GameArchiveManager;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
@@ -9,9 +14,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.geometry.VPos;
@@ -19,8 +26,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import static UI.MainUI.MainController.getSessionIdentifier;
@@ -52,9 +60,19 @@ public class HistoryArchiveController {
     @FXML
     private Button cancelButton;
 
+    @FXML
+    private Button muteButton;
+
+    @FXML
+    private Button importButton;
+
+    @FXML
+    private Button exportButton;
+
     private List<GameArchiveManager.SaveFileInfo> saveFiles;
     private GameArchiveManager archiveManager;
     private GameArchiveManager.GameArchiveData currentPreviewData;
+    private GameMove lastMove; // 用于高亮显示上一步
     private String currentUserName = getUserName();
     private String sessionIdentifier = getSessionIdentifier();
     
@@ -69,8 +87,13 @@ public class HistoryArchiveController {
     private double offsetY;
     private final Color RED_COLOR = Color.web("#8B0000");
 
+    private final String SOUND_ICON = "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+    private final String MUTE_ICON = "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+
+
     @FXML
     public void initialize() {
+        updateMuteIcon();
         welcomeLabel.setText("欢迎，" + currentUserName);
 
         // 显示头像
@@ -141,6 +164,11 @@ public class HistoryArchiveController {
             GameArchiveManager.GameArchiveData loadedData = archiveManager.loadGame(selectedFileInfo.getFileName());
             if (loadedData != null) {
                 currentPreviewData = loadedData;
+                if (loadedData.moves != null && !loadedData.moves.isEmpty()) {
+                    lastMove = loadedData.moves.get(loadedData.moves.size() - 1);
+                } else {
+                    lastMove = null;
+                }
                 drawPreviewBoard();
             }
         }
@@ -199,7 +227,7 @@ public class HistoryArchiveController {
 
         // 楚河汉界
         gc.setFill(lineColor);
-        gc.setFont(Font.font("KaiTi", 24));
+        gc.setFont(loadCustomFont("fonts/DuanNingXingShu.ttf", 24));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         double textY = 4.5 * CELL_SIZE + offsetY;
@@ -215,6 +243,12 @@ public class HistoryArchiveController {
         };
         for (int[] coord : markerCoords) {
             drawMarker(gc, coord[1], coord[0]);
+        }
+
+        // 绘制上一步的标记
+        if (lastMove != null) {
+            drawLastMoveHighlight(gc, lastMove.fromX, lastMove.fromY);
+            drawLastMoveHighlight(gc, lastMove.toX, lastMove.toY);
         }
     }
 
@@ -247,6 +281,32 @@ public class HistoryArchiveController {
             gc.strokeLine(x + gap, y + gap, x + gap + len, y + gap);
             gc.strokeLine(x + gap, y + gap, x + gap, y + gap + len);
         }
+    }
+
+    private void drawLastMoveHighlight(GraphicsContext gc, int col, int row) {
+        double x = col * CELL_SIZE + offsetX;
+        double y = row * CELL_SIZE + offsetY;
+        double cornerSize = 10; // The length of each corner line
+        double gap = CELL_SIZE / 2.0 - 5; // Gap from the center point
+
+        gc.setStroke(Color.web("#3498db", 0.8)); // A nice blue color
+        gc.setLineWidth(3);
+
+        // Top-left corner
+        gc.strokeLine(x - gap, y - gap, x - gap + cornerSize, y - gap);
+        gc.strokeLine(x - gap, y - gap, x - gap, y - gap + cornerSize);
+
+        // Top-right corner
+        gc.strokeLine(x + gap, y - gap, x + gap - cornerSize, y - gap);
+        gc.strokeLine(x + gap, y - gap, x + gap, y - gap + cornerSize);
+
+        // Bottom-left corner
+        gc.strokeLine(x - gap, y + gap, x - gap + cornerSize, y + gap);
+        gc.strokeLine(x - gap, y + gap, x - gap, y + gap - cornerSize);
+
+        // Bottom-right corner
+        gc.strokeLine(x + gap, y + gap, x + gap - cornerSize, y + gap);
+        gc.strokeLine(x + gap, y + gap, x + gap, y + gap - cornerSize);
     }
 
     private void drawPieces() {
@@ -342,7 +402,21 @@ public class HistoryArchiveController {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("确认删除");
             alert.setHeaderText(null);
-            alert.setContentText("确定要删除存档 \"" + selectedDisplayName + "\" 吗？此操作不可撤销。");
+            
+            String contentText = "确定要删除存档 \"" + selectedDisplayName + "\" 吗？此操作不可撤销。";
+            try {
+                Font customFont = Font.loadFont(new File("Resource/fonts/SIMFANG.TTF").toURI().toString(), 14);
+                if (customFont != null) {
+                    Label contentLabel = new Label(contentText);
+                    contentLabel.setFont(customFont);
+                    alert.getDialogPane().setContent(contentLabel);
+                } else {
+                    alert.setContentText(contentText); // Fallback
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                alert.setContentText(contentText); // Fallback
+            }
             
             ButtonType buttonTypeYes = new ButtonType("确定");
             ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -387,12 +461,114 @@ public class HistoryArchiveController {
     private void handleCancel() {
         Stage stage = (Stage) cancelButton.getScene().getWindow();
         stage.close();
+
+        MainLauncher mainLauncher = new MainLauncher(currentUserName, MainController.getSessionIdentifier());
+        mainLauncher.showMainWindow();
+    }
+
+    @FXML
+    private void handleImport() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("导入存档");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("象棋存档文件", "*.xiangqi"),
+            new FileChooser.ExtensionFilter("所有文件", "*.*")
+        );
+        File selectedFile = fileChooser.showOpenDialog(importButton.getScene().getWindow());
+
+        if (selectedFile != null) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+                Gson gson = new Gson();
+                GameArchiveManager.GameArchiveData importedData = gson.fromJson(reader, GameArchiveManager.GameArchiveData.class);
+
+                if (importedData != null && importedData.pieces != null && importedData.currentPlayerColor != null) {
+                    // 使用当前用户的密钥保存（重新加密）
+                    boolean success = archiveManager.saveGame(
+                        importedData.pieces,
+                        importedData.moves,
+                        importedData.currentPlayerColor
+                    );
+
+                    if (success) {
+                        showAlert("成功", "存档已成功导入并使用您的密钥保存。");
+                        // 重新加载存档列表
+                        loadSaveFiles();
+                        // 默认选择新导入的存档（它将是列表中的第一个）
+                        if (!saveFilesListView.getItems().isEmpty()) {
+                            saveFilesListView.getSelectionModel().select(0);
+                        }
+                    } else {
+                        showAlert("错误", "导入存档失败。");
+                    }
+                } else {
+                    showAlert("错误", "文件内容无效或格式不正确。");
+                }
+            } catch (IOException e) {
+                showAlert("错误", "读取文件时出错: " + e.getMessage());
+                e.printStackTrace();
+            } catch (JsonSyntaxException e) {
+                showAlert("错误", "JSON 解析失败，请确保文件是有效的未加密存档。");
+                e.printStackTrace();
+            } catch (Exception e) {
+                showAlert("错误", "发生未知错误: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @FXML
+    private void handleExport() {
+        String selectedDisplayName = saveFilesListView.getSelectionModel().getSelectedItem();
+        if (selectedDisplayName == null) {
+            showAlert("提示", "请选择一个存档文件进行导出");
+            return;
+        }
+
+        GameArchiveManager.SaveFileInfo selectedFileInfo = null;
+        for (GameArchiveManager.SaveFileInfo info : saveFiles) {
+            if (info.getDisplayName().equals(selectedDisplayName)) {
+                selectedFileInfo = info;
+                break;
+            }
+        }
+
+        if (selectedFileInfo != null) {
+            // 1. 解密存档
+            GameArchiveManager.GameArchiveData archiveData = archiveManager.loadGame(selectedFileInfo.getFileName());
+            if (archiveData == null) {
+                showAlert("错误", "无法加载（解密）存档，导出失败。");
+                return;
+            }
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("导出为无加密存档");
+            fileChooser.setInitialFileName(selectedFileInfo.getFileName().replace(".json", ".xiangqi"));
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("象棋存档文件", "*.xiangqi"),
+                new FileChooser.ExtensionFilter("所有文件", "*.*")
+            );
+            File selectedFile = fileChooser.showSaveDialog(exportButton.getScene().getWindow());
+
+            if (selectedFile != null) {
+                // 2. 转换为JSON并写入文件
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                String jsonText = gson.toJson(archiveData);
+
+                try (FileWriter writer = new FileWriter(selectedFile)) {
+                    writer.write(jsonText);
+                    showAlert("成功", "存档已成功导出为无加密的象棋存档文件！");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    showAlert("错误", "导出存档时发生文件写入错误！");
+                }
+            }
+        }
     }
 
     private Font loadCustomFont(String filename, double size) {
-        String resourcePath = "/Resource/" + filename;
+        String resourcePath = "Resource/" + filename;
 
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+        try (InputStream is = HistoryArchiveController.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (is == null) {
                 System.err.println("错误: 找不到字体资源文件: " + resourcePath);
                 // 找不到时，返回一个通用的回退字体
@@ -405,5 +581,34 @@ public class HistoryArchiveController {
             e.printStackTrace();
             return Font.font("SimSun", size); // 失败的回退
         }
+    }
+
+    @FXML
+    private void handleMuteAction() {
+        try {
+            // 切换静音状态
+            boolean isMuted = AudioModel.getInstance().isMuted();
+            AudioModel.getInstance().setMute(!isMuted);
+
+            // 刷新图标
+            updateMuteIcon();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateMuteIcon() {
+        if (muteButton == null) return;
+
+        boolean isMuted = AudioModel.getInstance().isMuted();
+
+        SVGPath svg = new SVGPath();
+        svg.setContent(isMuted ? MUTE_ICON : SOUND_ICON);
+        // 设置颜色为深棕色以匹配你的主题 (#8b4513)，或者黑色 Color.BLACK
+        svg.setFill(Color.web("#8b4513"));
+        svg.setScaleX(1.5); // 图标放大倍数
+        svg.setScaleY(1.5);
+
+        muteButton.setGraphic(svg);
     }
 }

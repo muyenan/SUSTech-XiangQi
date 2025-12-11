@@ -9,7 +9,7 @@ public class GameMove {
     public long timestamp;
     public String pieceName;
     public String pieceColor;
-    public ChessPiece capturedPiece; // 新增字段，用于记录被吃掉的棋子
+    public ChessPiece capturedPiece; // 用于记录被吃掉的棋子
 
     public GameMove(int fromX, int fromY, int toX, int toY, long timestamp, String pieceName, String pieceColor, ChessPiece capturedPiece) {
         this.fromX = fromX;

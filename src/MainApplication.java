@@ -1,9 +1,10 @@
+import UI.Models.AudioModel;
+import UI.Models.FontManager;
 import UI.Models.LoginState;
 import UI.MainUI.MainLauncher;
 import UI.loginUI.LoginLauncher;
 
 import javafx.application.Application;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.awt.*;
@@ -21,7 +22,10 @@ public class MainApplication {
             // 使用AWT强制设置Dock图标
             setAwtDockIcon();
 
-            loadFonts();
+            // Load all fonts for CSS
+            FontManager.loadAllFonts();
+
+            AudioModel.getInstance().playBGM("/Resource/BGM.mp3");
 
             String lastUser = LoginState.getCurrentUser();
 
@@ -52,18 +56,6 @@ public class MainApplication {
                 } catch (Exception e) {
                     System.err.println("AWT Taskbar 设置 Dock 图标失败：" + e.getMessage());
                 }
-            }
-        }
-
-        private void loadFonts() {
-            try {
-                Font.loadFont(getClass().getResourceAsStream("/fonts/仿宋_GB2312.ttf"), 16);
-                Font.loadFont(getClass().getResourceAsStream("/fonts/DuanNingXingShu.ttf"), 16);
-
-                System.out.println("字体加载成功");
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("字体加载失败");
             }
         }
     }

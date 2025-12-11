@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.MainGameUI.MainGameController" stylesheets="@../../Resource/style.css">
+<StackPane stylesheets="@../../Resource/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.MainGameUI.MainGameController">
     <BorderPane prefHeight="500" prefWidth="770">
         <left>
             <StackPane prefWidth="450">
@@ -31,44 +31,54 @@
                                 <Image url="@../../Resource/DefaultAvatar.png" />
                             </image>
                         </ImageView>
-                        <Label fx:id="welcomeLabel" text="欢迎，玩家" wrapText="true" styleClass="welcome-label"/>
+                        <Label fx:id="welcomeLabel" styleClass="welcome-label" text="欢迎，玩家" wrapText="true" />
                     </HBox>
-                    <Label fx:id="turnLabel" text="当前回合: 正在初始化..." textFill="RED" styleClass="turn-label"/>
+                    <Label fx:id="turnLabel" styleClass="turn-label" text="当前回合: 正在初始化..." textFill="RED" />
                     <VBox alignment="CENTER_LEFT" prefWidth="280" spacing="10">
-                        <Label fx:id="SignUpLabel" text="注册时间：" wrapText="true" styleClass="info-label"/>
-                        <Label fx:id="LastLoginLabel" text="上次登录：" wrapText="true" styleClass="info-label"/>
+                        <Label fx:id="SignUpLabel" styleClass="info-label" text="注册时间：" wrapText="true" />
+                        <Label fx:id="LastLoginLabel" styleClass="info-label" text="上次登录：" wrapText="true" />
                     </VBox>
                     <Region prefHeight="20" />
                     <VBox alignment="CENTER" prefWidth="280" spacing="15">
-                        <Button onAction="#handleSaveGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" text="保存游戏" styleClass="game-button-large"/>
-                        <Button onAction="#handleLoadGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" text="加载存档" styleClass="game-button-large"/>
-                        <Button onAction="#handleUndoMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #a9a9a9; -fx-text-fill: white; -fx-background-radius: 8;" text="悔棋" styleClass="game-button-large"/>
-                        <Button fx:id="BackMainButton" onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="返回主界面" styleClass="game-button-medium"/>
+                        <Button onAction="#handleSaveGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="保存游戏" />
+                        <Button onAction="#handleLoadGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="加载存档" />
+                        <Button onAction="#handleUndoMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #a9a9a9; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="悔棋" />
+                        <Button onAction="#handleSurrender" prefHeight="35" prefWidth="220" style="-fx-background-color: #cd765c; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="投降" />
+                        <Button fx:id="BackMainButton" onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" styleClass="game-button-medium" text="返回主界面" />
                     </VBox>
-                    <Region prefHeight="20" />
+                    <HBox alignment="BOTTOM_RIGHT" prefHeight="8.0" prefWidth="280.0">
+                        <children>
+                            <Button fx:id="muteButton" contentDisplay="TOP" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+                        </children>
+                    </HBox>
                 </VBox>
             </StackPane>
         </center>
     </BorderPane>
 
     <!-- Victory Overlay -->
-    <StackPane fx:id="victoryOverlayPane" visible="false" styleClass="victory-pane">
-        <StackPane styleClass="victory-container" maxWidth="600" maxHeight="300">
-            <VBox styleClass="victory-inner-container" alignment="CENTER" spacing="25">
+    <StackPane fx:id="victoryOverlayPane" styleClass="victory-pane" visible="false">
+        <StackPane maxHeight="300" maxWidth="600" styleClass="victory-container">
+            <VBox alignment="CENTER" spacing="25" styleClass="victory-inner-container">
                 <!-- Watermark -->
-                <Label text="胜" styleClass="victory-watermark" StackPane.alignment="CENTER" />
+                <Label styleClass="victory-watermark" text="胜" StackPane.alignment="CENTER" />
                 <!-- Content -->
                 <VBox alignment="CENTER" spacing="30">
                     <VBox alignment="CENTER" spacing="5">
-                        <Label fx:id="victoryLabel" text="红方获胜" styleClass="victory-title" />
+                        <Label fx:id="victoryLabel" styleClass="victory-title" text="红方获胜" />
                         <Region prefHeight="4" prefWidth="150" style="-fx-background-color: linear-gradient(to right, transparent, #8b5a2b, transparent);" />
                     </VBox>
                     <HBox alignment="CENTER" spacing="25">
-                        <Button fx:id="replayButton" onAction="#handleReplay" prefHeight="40" prefWidth="180" text="查看回放" styleClass="victory-button" />
-                        <Button onAction="#handleClose" prefHeight="40" prefWidth="180" text="返回主菜单" styleClass="victory-button-close" />
+                        <Button fx:id="replayButton" onAction="#handleReplay" prefHeight="40" prefWidth="180" styleClass="victory-button" text="查看回放" />
+                        <Button onAction="#handleClose" prefHeight="40" prefWidth="180" styleClass="victory-button-close" text="返回主菜单" />
                     </HBox>
                 </VBox>
             </VBox>
         </StackPane>
+    </StackPane>
+    
+    <!-- Check Alert Overlay -->
+    <StackPane fx:id="checkAlertPane" alignment="CENTER" pickOnBounds="false" style="-fx-background-color: transparent;" visible="false">
+        <Label fx:id="checkAlertLabel" styleClass="check-alert-label" text="将军" />
     </StackPane>
 </StackPane>

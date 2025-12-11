@@ -1,8 +1,12 @@
 package UI.MainGameUI;
 
 import UI.MainUI.MainLauncher;
+import UI.Models.AudioModel;
 import UI.Models.GetAppPath;
 import UI.Models.GameArchiveManager;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.VPos;
@@ -11,16 +15,21 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +43,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static UI.MainUI.MainController.getSessionIdentifier;
 import static UI.MainUI.MainController.getUserName;
@@ -50,6 +60,9 @@ public class MainGameController {
     @FXML private StackPane victoryOverlayPane;
     @FXML private Label victoryLabel;
     @FXML private Button replayButton;
+    @FXML private StackPane checkAlertPane;
+    @FXML private Label checkAlertLabel;
+    @FXML private Button muteButton;
 
 
     // 常量定义
@@ -65,6 +78,8 @@ public class MainGameController {
     // 用于存储自定义加载的字体
     private Font redPieceFont;
     private Font blackPieceFont;
+    private Font redCheckFont;
+    private Font blackCheckFont;
 
     private String currentUserName = getUserName(); // 确定的用户名 (显示用)
     private String sessionIdentifier = getSessionIdentifier(); // 用户的唯一ID (校验用，游客为null)
@@ -82,17 +97,26 @@ public class MainGameController {
     private double offsetY;
     private boolean isGameOver = false; // 游戏结束标志
     
-    // 新增：用于存储可移动位置
+    // 用于存储可移动位置
     private boolean[][] validMoves = new boolean[COLS][ROWS];
     
     // 游戏历史记录
     private List<GameMove> gameMoves = new ArrayList<>();
     
+    // 用于高亮显示上一步
+    private GameMove lastMove = null;
+    
     // 当前加载的存档文件名（如果有的话）
     private String currentSaveFileName = null;
 
+    private final String SOUND_ICON = "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+    private final String MUTE_ICON = "M16.5 12c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+
+
     @FXML
     public void initialize() {
+
+        updateMuteIcon();
 
         String userName = currentUserName;
         String userValidationId = sessionIdentifier; // 使用会话标识符进行校验
@@ -118,9 +142,31 @@ public class MainGameController {
                 }
             }
             SignUpLabel.setText("注册时间: " + registrationTime);
+
+            // 显示头像
+            try {
+                File avatarFile = new File(getAppPath() + "/Accounts/" + sessionIdentifier + "/user_avatar.png");
+                if (avatarFile.exists()) {
+                    Image newAvatar = new Image(avatarFile.toURI().toString());
+                    AvatarImageView.setImage(newAvatar);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             LastLoginLabel.setText("本次登录: 临时访问");
             SignUpLabel.setText("注册时间: 临时访问");
+
+            // 显示头像
+            try {
+                File avatarFile = new File(getAppPath() + "/Accounts/" + sessionIdentifier + "/user_avatar.png");
+                if (avatarFile.exists()) {
+                    Image newAvatar = new Image(avatarFile.toURI().toString());
+                    AvatarImageView.setImage(newAvatar);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         // 计算棋盘偏移量 (用于居中 Canvas)
@@ -129,8 +175,11 @@ public class MainGameController {
         offsetX = (chessBoardCanvas.getWidth() - boardWidth) / 2.0;
         offsetY = (chessBoardCanvas.getHeight() - boardHeight) / 2.0;
 
+        // 为棋子和将军特效分别加载字体
         redPieceFont = loadCustomFont("fonts/HanYiWeiBeiJian-1.ttf", 26);
         blackPieceFont = loadCustomFont("fonts/HanYiWeiBeiFan-1.ttf", 26);
+        redCheckFont = loadCustomFont("fonts/HanYiWeiBeiJian-1.ttf", 60);
+        blackCheckFont = loadCustomFont("fonts/HanYiWeiBeiFan-1.ttf", 60);
 
         // 初始化棋盘和规则
         initializePieces();
@@ -220,56 +269,62 @@ public class MainGameController {
         }
 
         ChessPiece clickedPiece = getPieceAt(clickedX, clickedY);
-        boolean moved = false; // 标记是否发生了实际移动
+        boolean moved = false;
 
         if (selectedPiece == null) {
-            // 没有选中棋子，尝试选中
-            if (clickedPiece != null) {
-                if (clickedPiece.color.equals(currentPlayerColor)) {
-                    selectedPiece = clickedPiece;
-                    calculateValidMoves(); // 计算可移动位置
-                    drawBoard();
-                    drawPieces();
-                    System.out.println("选中棋子: " + selectedPiece);
-                } else {
-                    System.out.println("现在是 " + (currentPlayerColor.equals("RED") ? "红方" : "黑方") + " 回合，请移动您的棋子。");
-                }
+            if (clickedPiece != null && clickedPiece.color.equals(currentPlayerColor)) {
+                selectedPiece = clickedPiece;
+                calculateValidMoves();
+                drawBoard();
+                drawPieces();
             }
         } else {
-            // 已经选中棋子，尝试移动或重新选中
             if (clickedPiece == selectedPiece) {
-                // 点击同一棋子，取消选择
                 selectedPiece = null;
-                clearValidMoves(); // 清除可移动位置
+                clearValidMoves();
                 drawBoard();
                 drawPieces();
-                System.out.println("取消选择");
             } else if (clickedPiece != null && clickedPiece.color.equals(selectedPiece.color)) {
-                // 点击己方其他棋子，更换选择
                 selectedPiece = clickedPiece;
-                calculateValidMoves(); // 计算可移动位置
+                calculateValidMoves();
                 drawBoard();
                 drawPieces();
-                System.out.println("更换选择: " + selectedPiece);
             } else {
-                // 尝试移动到(clickedX, clickedY)
-                if (validMoves[clickedX][clickedY]) { // 只有当位置有效时才移动
-                    makeMove(selectedPiece, clickedX, clickedY);
-                    if (!isGameOver) { // 如果游戏没有结束，才切换回合
-                        switchTurn();
-                    }
-                    moved = true; // 标记发生了实际移动
-                } else {
-                    System.out.println("非法移动!");
+                MoveRuleValidator.MoveValidationResult result = ruleValidator.checkMove(selectedPiece.x, selectedPiece.y, clickedX, clickedY);
+
+                switch (result) {
+                    case VALID:
+                        makeMove(selectedPiece, clickedX, clickedY);
+                        if (!isGameOver) {
+                            String opponentColor = currentPlayerColor.equals("RED") ? "BLACK" : "RED";
+                            if (isStalemate(opponentColor)) {
+                                // 无路可走，判断是绝杀还是困毙
+                                if (ruleValidator.isKingInCheck(opponentColor, pieces)) {
+                                    // 被将军，是绝杀
+                                    handleGameEnd(getKing(opponentColor), true);
+                                } else {
+                                    // 没有被将军，是困毙
+                                    handleGameEndDraw();
+                                }
+                            } else {
+                                switchTurn();
+                            }
+                        }
+                        moved = true;
+                        break;
+                    case INVALID_SELF_CHECK:
+                        showAlert("提示", "不能“自毙”！此移动将使己方被将军。");
+                        break;
+                    case INVALID_RULE:
+                        System.out.println("非法移动!");
+                        break;
                 }
 
-                // 无论移动是否成功，都取消选择
                 selectedPiece = null;
-                clearValidMoves(); // 清除可移动位置
+                clearValidMoves();
                 drawBoard();
                 drawPieces();
-                
-                // 只有在实际发生了移动且游戏未结束时才自动保存游戏
+
                 if (moved && !isGameOver) {
                     autoSaveGame();
                 }
@@ -277,7 +332,7 @@ public class MainGameController {
         }
     }
 
-    // 新增：计算可移动位置
+    // 计算可移动位置
     private void calculateValidMoves() {
         // 先清空之前的有效移动位置
         clearValidMoves();
@@ -298,7 +353,7 @@ public class MainGameController {
         }
     }
     
-    // 新增：清除可移动位置
+    // 清除可移动位置
     private void clearValidMoves() {
         for (int x = 0; x < COLS; x++) {
             for (int y = 0; y < ROWS; y++) {
@@ -319,7 +374,9 @@ public class MainGameController {
         }
 
         // 记录移动历史
-        gameMoves.add(new GameMove(pieceToMove.x, pieceToMove.y, newX, newY, System.currentTimeMillis(), pieceToMove.type, pieceToMove.color, capturedPiece));
+        GameMove move = new GameMove(pieceToMove.x, pieceToMove.y, newX, newY, System.currentTimeMillis(), pieceToMove.type, pieceToMove.color, capturedPiece);
+        gameMoves.add(move);
+        lastMove = move;
 
         pieceToMove.x = newX;
         pieceToMove.y = newY;
@@ -328,19 +385,39 @@ public class MainGameController {
 
         // 检查胜利条件
         if (capturedPiece != null && (capturedPiece.type.equals("帅") || capturedPiece.type.equals("将"))) {
-            handleGameEnd(capturedPiece);
+            handleGameEnd(capturedPiece, false);
+        } else {
+            // 检查是否吃子，如果吃子则显示吃子特效
+            if (capturedPiece != null) {
+                handleCaptureEffect(pieceToMove.color, newX, newY);
+            }
+            
+            // 检查是否将军
+            String opponentColor = pieceToMove.color.equals("RED") ? "BLACK" : "RED";
+            if (ruleValidator.isKingInCheck(opponentColor, pieces)) {
+                handleCheckEffect(pieceToMove.color);
+            }
         }
     }
 
-    private void handleGameEnd(ChessPiece capturedGeneral) {
+    private void handleGameEnd(ChessPiece king, boolean isStalemate) {
         isGameOver = true;
         updateTurnDisplay();
-        String winner = capturedGeneral.color.equals("RED") ? "黑方" : "红方";
+        String winner;
+        String victoryMessage;
+
+        if (isStalemate) {
+            winner = king.color.equals("RED") ? "黑方" : "红方";
+            victoryMessage = winner + "获胜 (绝杀)";
+        } else {
+            winner = king.color.equals("RED") ? "黑方" : "红方";
+            victoryMessage = winner + "获胜";
+        }
         
-        victoryLabel.setText(winner + "获胜");
+        victoryLabel.setText(victoryMessage);
         
         // 移除所有可能的颜色样式
-        victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black");
+        victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black", "draw-title");
         replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
 
         if ("红方".equals(winner)) {
@@ -350,6 +427,21 @@ public class MainGameController {
             victoryLabel.getStyleClass().add("victory-title-black");
             replayButton.getStyleClass().add("victory-button-black");
         }
+        victoryOverlayPane.setVisible(true);
+    }
+
+    private void handleGameEndDraw() {
+        isGameOver = true;
+        updateTurnDisplay();
+        String victoryMessage = "和棋 (困毙)";
+
+        victoryLabel.setText(victoryMessage);
+
+        // 移除所有可能的颜色样式并添加和棋样式
+        victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black");
+        victoryLabel.getStyleClass().add("draw-title");
+        replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
+
         victoryOverlayPane.setVisible(true);
     }
 
@@ -390,6 +482,14 @@ public class MainGameController {
     private ChessPiece getPieceAt(int x, int y) {
         return Arrays.stream(pieces)
                 .filter(p -> p != null && p.x == x && p.y == y)
+                .findFirst()
+                .orElse(null);
+    }
+    
+    private ChessPiece getKing(String color) {
+        String kingType = color.equals("RED") ? "帅" : "将";
+        return Arrays.stream(pieces)
+                .filter(p -> p.type.equals(kingType) && p.color.equals(color))
                 .findFirst()
                 .orElse(null);
     }
@@ -489,7 +589,7 @@ public class MainGameController {
 
         // 楚河汉界
         gc.setFill(lineColor);
-        gc.setFont(Font.font("KaiTi", 24));
+        gc.setFont(loadCustomFont("fonts/DuanNingXingShu.ttf", 24));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         double textY = 4.5 * CELL_SIZE + offsetY;
@@ -505,6 +605,12 @@ public class MainGameController {
         };
         for (int[] coord : markerCoords) {
             drawMarker(gc, coord[1], coord[0]);
+        }
+        
+        // 新增：绘制上一步的标记
+        if (lastMove != null) {
+            drawLastMoveHighlight(gc, lastMove.fromX, lastMove.fromY);
+            drawLastMoveHighlight(gc, lastMove.toX, lastMove.toY);
         }
     }
 
@@ -537,6 +643,33 @@ public class MainGameController {
             gc.strokeLine(x + gap, y + gap, x + gap + len, y + gap);
             gc.strokeLine(x + gap, y + gap, x + gap, y + gap + len);
         }
+    }
+    
+    // 绘制上一步高亮
+    private void drawLastMoveHighlight(GraphicsContext gc, int col, int row) {
+        double x = col * CELL_SIZE + offsetX;
+        double y = row * CELL_SIZE + offsetY;
+        double cornerSize = 10; // The length of each corner line
+        double gap = CELL_SIZE / 2.0 - 5; // Gap from the center point
+
+        gc.setStroke(Color.web("#3498db", 0.8)); // A nice blue color
+        gc.setLineWidth(3);
+
+        // Top-left corner
+        gc.strokeLine(x - gap, y - gap, x - gap + cornerSize, y - gap);
+        gc.strokeLine(x - gap, y - gap, x - gap, y - gap + cornerSize);
+
+        // Top-right corner
+        gc.strokeLine(x + gap, y - gap, x + gap - cornerSize, y - gap);
+        gc.strokeLine(x + gap, y - gap, x + gap, y - gap + cornerSize);
+
+        // Bottom-left corner
+        gc.strokeLine(x - gap, y + gap, x - gap + cornerSize, y + gap);
+        gc.strokeLine(x - gap, y + gap, x - gap, y + gap - cornerSize);
+
+        // Bottom-right corner
+        gc.strokeLine(x + gap, y + gap, x + gap - cornerSize, y + gap);
+        gc.strokeLine(x + gap, y + gap, x + gap, y + gap - cornerSize);
     }
 
     // 棋子绘制
@@ -724,15 +857,16 @@ public class MainGameController {
         }
 
         // 移除最后一步
-        GameMove lastMove = gameMoves.remove(gameMoves.size() - 1);
+        GameMove lastMoveRecord = gameMoves.remove(gameMoves.size() - 1);
+        lastMove = gameMoves.isEmpty() ? null : gameMoves.get(gameMoves.size() - 1);
 
         // 恢复棋子位置
         // 首先，找到移动的棋子。它现在在 toX, toY
         ChessPiece movedPiece = null;
         for (ChessPiece piece : pieces) {
-            if (piece.x == lastMove.toX && piece.y == lastMove.toY) {
+            if (piece.x == lastMoveRecord.toX && piece.y == lastMoveRecord.toY) {
                 // 为了更精确地匹配，可以比较棋子类型和颜色
-                if (piece.type.equals(lastMove.pieceName) && piece.color.equals(lastMove.pieceColor)) {
+                if (piece.type.equals(lastMoveRecord.pieceName) && piece.color.equals(lastMoveRecord.pieceColor)) {
                     movedPiece = piece;
                     break;
                 }
@@ -740,15 +874,15 @@ public class MainGameController {
         }
         
         if (movedPiece != null) {
-            movedPiece.x = lastMove.fromX;
-            movedPiece.y = lastMove.fromY;
+            movedPiece.x = lastMoveRecord.fromX;
+            movedPiece.y = lastMoveRecord.fromY;
         }
 
         // 如果上一步是吃子，则需要恢复被吃的棋子
-        if (lastMove.capturedPiece != null) {
+        if (lastMoveRecord.capturedPiece != null) {
             // 将被吃的棋子重新添加到棋子数组中
             List<ChessPiece> pieceList = new ArrayList<>(Arrays.asList(pieces));
-            pieceList.add(lastMove.capturedPiece);
+            pieceList.add(lastMoveRecord.capturedPiece);
             pieces = pieceList.toArray(new ChessPiece[0]);
         }
 
@@ -764,6 +898,82 @@ public class MainGameController {
 
         // 自动保存悔棋后的状态
         autoSaveGame();
+    }
+
+    /**
+     * 处理玩家投降操作
+     */
+    @FXML
+    private void handleSurrender() {
+        if (isGameOver) {
+            showAlert("提示", "游戏已结束。");
+            return;
+        }
+
+        // 确认是否投降
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("确认投降");
+        alert.setHeaderText(null);
+        String contentText = "确定要投降吗？这将直接结束游戏并判对方获胜。";
+        alert.setContentText(contentText);
+        
+        try {
+            Font customFont = Font.loadFont(new File("Resource/fonts/SIMFANG.TTF").toURI().toString(), 14);
+            if (customFont != null) {
+                Label contentLabel = new Label(contentText);
+                contentLabel.setFont(customFont);
+                alert.getDialogPane().setContent(contentLabel);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ButtonType buttonTypeYes = new ButtonType("确定");
+        ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        
+        alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == buttonTypeYes) {
+            // 投降方为当前玩家，胜利方为对方
+            String loserColor = currentPlayerColor;
+            String winnerColor = loserColor.equals("RED") ? "黑方" : "红方";
+            String loserName = loserColor.equals("RED") ? "红方" : "黑方";
+            
+            // 创建一个假的被吃掉的棋子（帅或将）来表示投降
+            String loserKingType = loserColor.equals("RED") ? "帅" : "将";
+            ChessPiece fakeCapturedPiece = new ChessPiece(loserKingType, loserColor, -1, -1);
+            
+            // 结束游戏，对方获胜
+            handleGameEndWithSurrender(fakeCapturedPiece, winnerColor, loserName);
+        }
+    }
+
+    /**
+     * 处理因投降而结束的游戏
+     * @param king 被"吃掉"的棋子（实际是投降方的帅或将）
+     * @param winner 获胜方名称
+     * @param loser 投降方名称
+     */
+    private void handleGameEndWithSurrender(ChessPiece king, String winner, String loser) {
+        isGameOver = true;
+        updateTurnDisplay();
+        String victoryMessage = winner + "获胜 (" + loser + "投降)";
+
+        victoryLabel.setText(victoryMessage);
+        
+        // 移除所有可能的颜色样式
+        victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black", "draw-title");
+        replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
+
+        // 根据获胜方设置样式
+        if (winner.equals("红方")) {
+            victoryLabel.getStyleClass().add("victory-title-red");
+            replayButton.getStyleClass().add("victory-button-red");
+        } else {
+            victoryLabel.getStyleClass().add("victory-title-black");
+            replayButton.getStyleClass().add("victory-button-black");
+        }
+        victoryOverlayPane.setVisible(true);
     }
 
     public static class UserSavePath {
@@ -821,47 +1031,10 @@ public class MainGameController {
         return registrationTime;
     }
 
-    private String getCurrentLoginTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(new Date());
-    }
-
-    private void updateLastLogin(String userName) {
-        File configFile = new File(getAppPath() + "/Accounts/" + userName + "/user.config");
-        if (!configFile.exists()) {
-            return;
-        }
-
-        Properties properties = new Properties();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        try (FileInputStream fis = new FileInputStream(configFile)) {
-            properties.load(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        properties.setProperty("last_login", sdf.format(new Date()));
-
-        try (FileOutputStream fos = new FileOutputStream(configFile)) {
-            properties.store(fos, "用户配置文件 - 更新登录时间");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String RandomCodeGenerator() {
-        Random random = new Random();
-        int num = random.nextInt(1000000);
-        String result = String.format("%06d", num);
-        return result;
-    }
-
     private Font loadCustomFont(String filename, double size) {
-        String resourcePath = "/Resource/" + filename;
+        String resourcePath = "Resource/" + filename;
 
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+        try (InputStream is = MainGameController.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (is == null) {
                 System.err.println("错误: 找不到字体资源文件: " + resourcePath);
                 // 找不到时，返回一个通用的回退字体
@@ -881,6 +1054,7 @@ public class MainGameController {
         if (data != null) {
             pieces = data.pieces;
             gameMoves = data.moves != null ? data.moves : new ArrayList<>();
+            lastMove = gameMoves.isEmpty() ? null : gameMoves.get(gameMoves.size() - 1);
             currentPlayerColor = data.currentPlayerColor != null ? data.currentPlayerColor : "RED";
             ruleValidator = new MoveRuleValidator(pieces);
             updateTurnDisplay();
@@ -895,5 +1069,136 @@ public class MainGameController {
             loadGameData(data);
             currentSaveFileName = fileName; // 记录当前加载的存档文件名
         }
+    }
+
+    private void handleCheckEffect(String attackerColor) {
+        checkAlertPane.setVisible(true);
+        checkAlertLabel.setText("将"); // 默认显示"将"
+        checkAlertLabel.getStyleClass().removeAll("check-alert-red", "check-alert-black");
+
+        if (attackerColor.equals("RED")) {
+            checkAlertLabel.getStyleClass().add("check-alert-red");
+            checkAlertLabel.setFont(redCheckFont);
+        } else {
+            checkAlertLabel.getStyleClass().add("check-alert-black");
+            checkAlertLabel.setFont(blackCheckFont);
+        }
+
+        // 创建动画
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(checkAlertLabel.opacityProperty(), 0),
+                        new KeyValue(checkAlertLabel.scaleXProperty(), 3),
+                        new KeyValue(checkAlertLabel.scaleYProperty(), 3),
+                        new KeyValue(checkAlertLabel.rotateProperty(), 0)
+                ),
+                new KeyFrame(Duration.millis(500),
+                        new KeyValue(checkAlertLabel.opacityProperty(), 1),
+                        new KeyValue(checkAlertLabel.scaleXProperty(), 1),
+                        new KeyValue(checkAlertLabel.scaleYProperty(), 1),
+                        new KeyValue(checkAlertLabel.rotateProperty(), -10)
+                ),
+                new KeyFrame(Duration.millis(1500), // 停留1秒
+                        new KeyValue(checkAlertLabel.opacityProperty(), 1)
+                ),
+                new KeyFrame(Duration.millis(2000), // 0.5秒后消失
+                        new KeyValue(checkAlertLabel.opacityProperty(), 0)
+                )
+        );
+
+        timeline.setOnFinished(event -> checkAlertPane.setVisible(false));
+        timeline.play();
+    }
+
+    /**
+     * 处理吃子特效，显示"吃"字
+     * @param attackerColor 攻击方颜色
+     * @param x 吃子位置的x坐标
+     * @param y 吃子位置的y坐标
+     */
+    private void handleCaptureEffect(String attackerColor, int x, int y) {
+        checkAlertPane.setVisible(true);
+        checkAlertLabel.setText("吃"); // 显示"吃"
+        checkAlertLabel.getStyleClass().removeAll("check-alert-red", "check-alert-black");
+
+        if (attackerColor.equals("RED")) {
+            checkAlertLabel.getStyleClass().add("check-alert-red");
+            checkAlertLabel.setFont(redCheckFont);
+        } else {
+            checkAlertLabel.getStyleClass().add("check-alert-black");
+            checkAlertLabel.setFont(blackCheckFont);
+        }
+
+        // 创建动画
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(checkAlertLabel.opacityProperty(), 0),
+                        new KeyValue(checkAlertLabel.scaleXProperty(), 3),
+                        new KeyValue(checkAlertLabel.scaleYProperty(), 3),
+                        new KeyValue(checkAlertLabel.rotateProperty(), 0)
+                ),
+                new KeyFrame(Duration.millis(500),
+                        new KeyValue(checkAlertLabel.opacityProperty(), 1),
+                        new KeyValue(checkAlertLabel.scaleXProperty(), 1),
+                        new KeyValue(checkAlertLabel.scaleYProperty(), 1),
+                        new KeyValue(checkAlertLabel.rotateProperty(), -10)
+                ),
+                new KeyFrame(Duration.millis(1500), // 停留1秒
+                        new KeyValue(checkAlertLabel.opacityProperty(), 1)
+                ),
+                new KeyFrame(Duration.millis(2000), // 0.5秒后消失
+                        new KeyValue(checkAlertLabel.opacityProperty(), 0)
+                )
+        );
+
+        timeline.setOnFinished(event -> checkAlertPane.setVisible(false));
+        timeline.play();
+    }
+
+    @FXML
+    private void handleMuteAction() {
+        try {
+            // 切换静音状态
+            boolean isMuted = AudioModel.getInstance().isMuted();
+            AudioModel.getInstance().setMute(!isMuted);
+
+            // 刷新图标
+            updateMuteIcon();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateMuteIcon() {
+        if (muteButton == null) return;
+
+        boolean isMuted = AudioModel.getInstance().isMuted();
+
+        SVGPath svg = new SVGPath();
+        svg.setContent(isMuted ? MUTE_ICON : SOUND_ICON);
+        // 设置颜色为深棕色
+        svg.setFill(Color.web("#8b4513"));
+        svg.setScaleX(1.5); // 图标放大倍数
+        svg.setScaleY(1.5);
+
+        muteButton.setGraphic(svg);
+    }
+
+    private boolean isStalemate(String playerColor) {
+        // 遍历该玩家的所有棋子
+        for (ChessPiece piece : pieces) {
+            if (piece.color.equals(playerColor)) {
+                // 遍历棋盘上的所有位置
+                for (int x = 0; x < COLS; x++) {
+                    for (int y = 0; y < ROWS; y++) {
+                        // 检查是否存在任何一个合法的移动
+                        if (ruleValidator.checkMove(piece.x, piece.y, x, y) == MoveRuleValidator.MoveValidationResult.VALID) {
+                            return false; // 只要找到一个合法移动，就不是绝杀
+                        }
+                    }
+                }
+            }
+        }
+        return true; // 如果所有棋子都没有任何合法移动，则是绝杀
     }
 }

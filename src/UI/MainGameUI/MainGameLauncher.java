@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MainGameLauncher {
 
@@ -15,6 +16,7 @@ public class MainGameLauncher {
     private GameArchiveManager.GameArchiveData loadedData;
     private String loadedFileName;
     private String lastLoginTime;
+    private List<GameMove> gameMoves; // 新增，用于从特定状态启动
 
     public MainGameLauncher() {
         // 默认构造函数
@@ -42,6 +44,14 @@ public class MainGameLauncher {
         this.username = username;
         this.sessionIdentifier = sessionIdentifier;
         this.lastLoginTime = lastLoginTime;
+    }
+
+    // 新增构造函数：从特定棋局状态启动
+    public MainGameLauncher(String username, String sessionIdentifier, ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor) {
+        this.username = username;
+        this.sessionIdentifier = sessionIdentifier;
+        this.loadedData = new GameArchiveManager.GameArchiveData(pieces, moves, currentPlayerColor);
+        this.gameMoves = moves;
     }
 
     public void showMainGameWindow() {

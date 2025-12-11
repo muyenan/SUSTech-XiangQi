@@ -23,14 +23,21 @@
                     <Insets bottom="20" left="20" right="20" top="20" />
                 </padding>
                 <Label text="对局回放" styleClass="welcome-label"/>
-                <Label fx:id="moveInfoLabel" text="第 0/0 步" styleClass="info-label"/>
+                <Label fx:id="moveInfoLabel" text="第 0/0 步" styleClass="turn-label"/>
                 <Region prefHeight="20" />
                 <VBox alignment="CENTER" prefWidth="280" spacing="15">
                     <Button onAction="#handlePrevMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" text="上一步" styleClass="game-button-large"/>
                     <Button onAction="#handleNextMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" text="下一步" styleClass="game-button-large"/>
+                    <Button onAction="#handleStartFromHere" prefHeight="35" prefWidth="220" style="-fx-background-color: #5a9bd5; -fx-text-fill: white; -fx-background-radius: 8;" text="从此处开始" styleClass="game-button-large"/>
+                    <Button onAction="#handlePlayAgain" prefHeight="35" prefWidth="220" style="-fx-background-color: #70ad47; -fx-text-fill: white; -fx-background-radius: 8;" text="再来一局" styleClass="game-button-large"/>
                     <Button onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="返回主界面" styleClass="game-button-medium"/>
                 </VBox>
                 <Region prefHeight="20" />
+                <HBox alignment="BOTTOM_RIGHT" prefHeight="8.0" prefWidth="280.0">
+                    <children>
+                        <Button fx:id="muteButton" contentDisplay="TOP" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+                    </children>
+                </HBox>
             </VBox>
         </StackPane>
     </center>

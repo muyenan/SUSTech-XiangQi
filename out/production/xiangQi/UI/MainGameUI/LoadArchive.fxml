@@ -40,6 +40,11 @@
                     <Button fx:id="cancelButton" onAction="#handleCancel" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" text="取消" styleClass="game-button-medium"/>
                 </VBox>
                 <Region prefHeight="20" />
+                <HBox alignment="BOTTOM_RIGHT" prefHeight="8.0" prefWidth="280.0">
+                    <children>
+                        <Button fx:id="muteButton" contentDisplay="TOP" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+                    </children>
+                </HBox>
             </VBox>
         </StackPane>
     </center>

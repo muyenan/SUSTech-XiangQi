@@ -14,12 +14,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="500" prefWidth="800"
-            xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="UI.loginUI.LoginController"
-            stylesheets="@../../Resource/style.css">
+<BorderPane prefHeight="500" prefWidth="800" stylesheets="@/Resource/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.loginUI.LoginController">
     <left>
         <StackPane prefWidth="450">
             <Canvas fx:id="goBoardCanvas" height="500.0" width="450" StackPane.alignment="CENTER" />
@@ -31,43 +28,42 @@
         </StackPane>
     </left>
     <center>
-        <VBox alignment="CENTER" prefWidth="350" spacing="15">
+        <VBox alignment="CENTER" maxHeight="500.0" maxWidth="320.0" minHeight="500.0" minWidth="320.0" prefHeight="500.0" prefWidth="320.0" spacing="20.0" style="-fx-background-color: rgba(255,255,255,0.85); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 3);">
             <padding>
-                <Insets bottom="40" left="40" right="40" top="40" />
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-            <Label text="妮可象棋" styleClass="title-label"/>
-            <TextField fx:id="userNameTextField"
-                       prefHeight="35" prefWidth="220.0"
-                       promptText="用户名"
-                       styleClass="input-field"/>
-            <PasswordField fx:id="passwordTextField"
-                           prefHeight="35" prefWidth="220"
-                           promptText="密码"
-                           styleClass="input-field"/>
-            <HBox alignment="CENTER_RIGHT" prefHeight="15.0" prefWidth="200.0">
+            <Label styleClass="title-label" text="妮可象棋">
+            <font>
+               <Font size="45.0" />
+            </font>
+            <VBox.margin>
+               <Insets top="35.0" />
+            </VBox.margin>
+            <padding>
+               <Insets top="35.0" />
+            </padding></Label>
+            <TextField fx:id="userNameTextField" maxWidth="240.0" minHeight="35.0" minWidth="240.0" prefHeight="35" prefWidth="240.0" promptText="用户名" styleClass="input-field" />
+            <PasswordField fx:id="passwordTextField" maxWidth="220.0" minHeight="35.0" minWidth="240.0" prefHeight="35" prefWidth="220" promptText="密码" styleClass="input-field" />
+            <HBox alignment="CENTER_RIGHT" maxWidth="240.0" minWidth="240.0" prefHeight="15.0" prefWidth="200.0">
                 <children>
-                    <CheckBox fx:id="autoLoginCheckBox"
-                              mnemonicParsing="false"
-                              text="自动登录"
-                              style="-fx-font-family: FangSong_GB2312; -fx-font-size: 10px;" />
+                    <CheckBox fx:id="autoLoginCheckBox" mnemonicParsing="false" style="-fx-font-family: FangSong_GB2312; -fx-font-size: 10px;" text="自动登录" />
                 </children>
             </HBox>
-            <Button fx:id="loginButton" onAction="#handleLogin"
-                    prefHeight="35" prefWidth="220"
-                    text="登录"
-                    styleClass="hint-button1"/>
-            <Button fx:id="signUpButton" onAction="#handleSignUp"
-                    prefHeight="35" prefWidth="220"
-                    text="注册"
-                    styleClass="hint-button2"/>
-            <Button fx:id="touristVisitButton" onAction="#handleTouristVisit"
-                    prefHeight="35" prefWidth="220"
-                    text="游客访问"
-                    styleClass="hint-button3"/>
-            <Hyperlink fx:id="findPasswordButton"
-                       onAction="#handleFindPassword"
-                       text="找回密码"
-                       styleClass="hint-link"/>
+            <Button fx:id="loginButton" minHeight="35.0" onAction="#handleLogin" prefHeight="35" prefWidth="220" styleClass="hint-button1" text="登录" />
+            <Button fx:id="signUpButton" minHeight="35.0" onAction="#handleSignUp" prefHeight="35" prefWidth="220" styleClass="hint-button2" text="注册" />
+            <Button fx:id="touristVisitButton" minHeight="35.0" onAction="#handleTouristVisit" prefHeight="35" prefWidth="220" styleClass="hint-button3" text="游客访问" />
+            <Hyperlink fx:id="findPasswordLink" onAction="#handleFindPassword" styleClass="hint-link" text="找回密码">
+            <font>
+               <Font size="12.0" />
+            </font></Hyperlink>
+            <HBox alignment="BOTTOM_RIGHT" minWidth="280.0" prefHeight="17.0" prefWidth="280.0">
+               <children>
+                     <Button fx:id="muteButton" contentDisplay="TOP" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+               </children>
+            <VBox.margin>
+               <Insets bottom="35.0" />
+            </VBox.margin>
+            </HBox>
         </VBox>
     </center>
 </BorderPane>

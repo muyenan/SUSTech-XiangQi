@@ -1,5 +1,8 @@
 package UI.MainGameUI;
 
+import UI.Models.AudioModel;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import javafx.fxml.FXML;
 
 import javafx.scene.canvas.Canvas;
@@ -8,14 +11,16 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.geometry.VPos;
 
-import java.io.File;
+import java.io.*;
 import java.util.List;
 
 import java.io.InputStream;
@@ -49,12 +54,18 @@ public class LoadArchiveController {
     @FXML
     private Button cancelButton;
 
+    @FXML
+    private Button muteButton;
+
+    @FXML
+    private Button importButton;
+
     private List<GameArchiveManager.SaveFileInfo> saveFiles;
     private GameArchiveManager archiveManager;
     private ChessPiece[] currentPreviewPieces;
     private String currentUserName = getUserName();
     private String sessionIdentifier = getSessionIdentifier();
-    private MainGameController mainGameController; // 引用主游戏控制器
+    private MainGameController mainGameController; // 主游戏控制器
     
     // 用于存储自定义加载的字体
     private Font redPieceFont;
@@ -67,6 +78,9 @@ public class LoadArchiveController {
     private double offsetY;
     private final Color RED_COLOR = Color.web("#8B0000");
 
+    private final String SOUND_ICON = "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+    private final String MUTE_ICON = "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+
 
     public void setMainGameController(MainGameController controller) {
         this.mainGameController = controller;
@@ -74,6 +88,7 @@ public class LoadArchiveController {
 
     @FXML
     public void initialize() {
+        updateMuteIcon();
         welcomeLabel.setText("欢迎，" + currentUserName);
 
         // 显示头像
@@ -116,6 +131,11 @@ public class LoadArchiveController {
         // 默认选择第一个存档进行预览
         if (!saveFilesListView.getItems().isEmpty()) {
             saveFilesListView.getSelectionModel().select(0);
+        }
+
+        // 绑定导入按钮事件
+        if (importButton != null) {
+            importButton.setOnAction(event -> handleImport());
         }
     }
 
@@ -202,7 +222,7 @@ public class LoadArchiveController {
 
         // 楚河汉界
         gc.setFill(lineColor);
-        gc.setFont(Font.font("KaiTi", 24));
+        gc.setFont(loadCustomFont("fonts/DuanNingXingShu.ttf", 24));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         double textY = 4.5 * CELL_SIZE + offsetY;
@@ -321,10 +341,59 @@ public class LoadArchiveController {
         }
     }
 
-    private Font loadCustomFont(String filename, double size) {
-        String resourcePath = "/Resource/" + filename;
+    @FXML
+    private void handleImport() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("导入游戏存档");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("象棋存档文件", "*.xiangqi")
+        );
+        File selectedFile = fileChooser.showOpenDialog(importButton.getScene().getWindow());
 
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+        if (selectedFile != null) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+                Gson gson = new Gson();
+                GameArchiveManager.GameArchiveData importedData = gson.fromJson(reader, GameArchiveManager.GameArchiveData.class);
+
+                if (importedData != null && importedData.pieces != null && importedData.currentPlayerColor != null) {
+                    // 使用当前用户的密钥保存（重新加密）
+                    boolean success = archiveManager.saveGame(
+                        importedData.pieces,
+                        importedData.moves,
+                        importedData.currentPlayerColor
+                    );
+
+                    if (success) {
+                        showAlert("成功", "存档已成功导入。");
+                        // 重新加载存档列表
+                        loadSaveFiles();
+                        // 默认选择新导入的存档（它将是列表中的第一个）
+                        if (!saveFilesListView.getItems().isEmpty()) {
+                            saveFilesListView.getSelectionModel().select(0);
+                        }
+                    } else {
+                        showAlert("错误", "导入存档失败。");
+                    }
+                } else {
+                    showAlert("错误", "文件内容无效或格式不正确。");
+                }
+            } catch (IOException e) {
+                showAlert("错误", "读取文件时出错: " + e.getMessage());
+                e.printStackTrace();
+            } catch (JsonSyntaxException e) {
+                showAlert("错误", "JSON 解析失败，请确保文件是有效的未加密存档。");
+                e.printStackTrace();
+            } catch (Exception e) {
+                showAlert("错误", "发生未知错误: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private Font loadCustomFont(String filename, double size) {
+        String resourcePath = "Resource/" + filename;
+
+        try (InputStream is = LoadArchiveController.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (is == null) {
                 System.err.println("错误: 找不到字体资源文件: " + resourcePath);
                 // 找不到时，返回一个通用的回退字体
@@ -343,5 +412,34 @@ public class LoadArchiveController {
     private void handleCancel() {
         Stage stage = (Stage) cancelButton.getScene().getWindow();
         stage.close();
+    }
+
+    @FXML
+    private void handleMuteAction() {
+        try {
+            // 切换静音状态
+            boolean isMuted = AudioModel.getInstance().isMuted();
+            AudioModel.getInstance().setMute(!isMuted);
+
+            // 刷新图标
+            updateMuteIcon();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateMuteIcon() {
+        if (muteButton == null) return;
+
+        boolean isMuted = AudioModel.getInstance().isMuted();
+
+        SVGPath svg = new SVGPath();
+        svg.setContent(isMuted ? MUTE_ICON : SOUND_ICON);
+        // 设置颜色为深棕色
+        svg.setFill(Color.web("#8b4513"));
+        svg.setScaleX(1.5); // 图标放大倍数
+        svg.setScaleY(1.5);
+
+        muteButton.setGraphic(svg);
     }
 }

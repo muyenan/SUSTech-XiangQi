@@ -13,5 +13,6 @@
             <Font size="14.0" />
          </font>
       </Button>
+      <Button fx:id="muteButton" contentDisplay="TOP" layoutX="550.0" layoutY="360.0" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
    </children>
 </AnchorPane>

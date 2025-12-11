@@ -10,10 +10,11 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="500" prefWidth="800" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.signUI.SignController" stylesheets="@../../Resource/style.css">
+<BorderPane prefHeight="500" prefWidth="800" stylesheets="@../../Resource/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UI.signUI.SignController">
 
     <left>
         <StackPane prefWidth="450">
@@ -27,22 +28,34 @@
     </left>
 
     <center>
-        <VBox alignment="CENTER" prefWidth="350" spacing="15">
+        <VBox alignment="CENTER" maxHeight="500.0" maxWidth="320.0" minHeight="500.0" minWidth="320.0" prefHeight="500.0" prefWidth="320.0" spacing="20.0">
             <padding>
-                <Insets bottom="40" left="40" right="40" top="40" />
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-            <Label alignment="CENTER" prefHeight="67.0" prefWidth="251.0" text="创建账户" styleClass="title-label"/>
-            <TextField fx:id="userNameTextField" prefHeight="35" prefWidth="220.0" promptText="用户名" styleClass="input-field"/>
-            <PasswordField fx:id="passwordTextField" prefHeight="35" prefWidth="220" promptText="密码" styleClass="input-field"/>
-         <PasswordField fx:id="confirmPasswordTextField" prefHeight="35" prefWidth="220" promptText="确认密码" styleClass="input-field"/>
-         <ImageView fx:id="avatarImageView" fitHeight="64.0" fitWidth="64.0">
-            <image>
-               <Image url="@../../Resource/DefaultAvatar.png" />
-            </image>
-         </ImageView>
-         <Hyperlink fx:id="uploadAvatarLink" onAction="#handleUploadAvatar" styleClass="hint-link" text="上传头像"/>
-            <Button fx:id="signUpButton" onAction="#handleSignUp" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" text="注册" styleClass="hint-button2"/>
-            <Hyperlink fx:id="returnLoginLink" onAction="#handleReturnLogin" styleClass="hint-link" text="已有账户？立即登录"/>
+            <Label alignment="CENTER" prefHeight="67.0" prefWidth="251.0" styleClass="title-label" text="创建账户">
+            <VBox.margin>
+               <Insets top="35.0" />
+            </VBox.margin></Label>
+            <TextField fx:id="userNameTextField" maxHeight="35.0" maxWidth="240.0" minHeight="35.0" minWidth="240.0" prefHeight="35.0" prefWidth="240.0" promptText="用户名" styleClass="input-field" />
+            <PasswordField fx:id="passwordTextField" maxHeight="35.0" maxWidth="240.0" minHeight="35.0" minWidth="240.0" prefHeight="50.0" prefWidth="240.0" promptText="密码" styleClass="input-field" />
+         <PasswordField fx:id="confirmPasswordTextField" maxHeight="35.0" maxWidth="240.0" minHeight="35.0" minWidth="240.0" prefHeight="50.0" prefWidth="220" promptText="确认密码" styleClass="input-field" />
+         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+            <children>
+               <ImageView fx:id="avatarImageView" fitHeight="64.0" fitWidth="64.0">
+                  <image>
+                     <Image url="@../../Resource/DefaultAvatar.png" />
+                  </image>
+               </ImageView>
+               <Hyperlink fx:id="uploadAvatarLink" onAction="#handleUploadAvatar" styleClass="hint-link" text="上传头像" />
+            </children>
+         </HBox>
+            <Button fx:id="signUpButton" onAction="#handleSignUp" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="hint-button2" text="注册" />
+            <Hyperlink fx:id="returnLoginLink" onAction="#handleReturnLogin" styleClass="hint-link" text="已有账户？立即登录" />
+            <HBox alignment="BOTTOM_RIGHT" prefHeight="41.0" prefWidth="240.0">
+               <children>
+                     <Button fx:id="muteButton" contentDisplay="TOP" onAction="#handleMuteAction" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+               </children>
+            </HBox>
         </VBox>
     </center>
 
