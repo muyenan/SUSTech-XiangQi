@@ -47,8 +47,8 @@ public class AudioModel {
             // 设置无限循环 (INDEFINITE)
             mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
 
-            // 设置默认音量 (0.5)
-            mediaPlayer.setVolume(0.5);
+            // 设置默认音量
+            mediaPlayer.setVolume(0.3);
 
             // 开始播放
             mediaPlayer.play();

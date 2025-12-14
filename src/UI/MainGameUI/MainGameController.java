@@ -59,6 +59,7 @@ public class MainGameController {
     @FXML private Label welcomeLabel, SignUpLabel, LastLoginLabel, turnLabel;
     @FXML private StackPane victoryOverlayPane;
     @FXML private Label victoryLabel;
+    @FXML private Label victoryWatermarkLabel;
     @FXML private Button replayButton;
     @FXML private StackPane checkAlertPane;
     @FXML private Label checkAlertLabel;
@@ -304,7 +305,7 @@ public class MainGameController {
                                     handleGameEnd(getKing(opponentColor), true);
                                 } else {
                                     // 没有被将军，是困毙
-                                    handleGameEndDraw();
+                                    handleGameEndDraw("困毙");
                                 }
                             } else {
                                 switchTurn();
@@ -415,9 +416,11 @@ public class MainGameController {
         }
         
         victoryLabel.setText(victoryMessage);
+        victoryWatermarkLabel.setText("胜");
         
         // 移除所有可能的颜色样式
         victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black", "draw-title");
+        victoryWatermarkLabel.getStyleClass().removeAll("draw-watermark");
         replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
 
         if ("红方".equals(winner)) {
@@ -430,16 +433,18 @@ public class MainGameController {
         victoryOverlayPane.setVisible(true);
     }
 
-    private void handleGameEndDraw() {
+    private void handleGameEndDraw(String reason) {
         isGameOver = true;
         updateTurnDisplay();
-        String victoryMessage = "和棋 (困毙)";
+        String victoryMessage = "和棋 (" + reason + ")";
 
         victoryLabel.setText(victoryMessage);
+        victoryWatermarkLabel.setText("平");
 
         // 移除所有可能的颜色样式并添加和棋样式
         victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black");
         victoryLabel.getStyleClass().add("draw-title");
+        victoryWatermarkLabel.getStyleClass().add("draw-watermark");
         replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
 
         victoryOverlayPane.setVisible(true);
@@ -917,20 +922,29 @@ public class MainGameController {
         String contentText = "确定要投降吗？这将直接结束游戏并判对方获胜。";
         alert.setContentText(contentText);
         
-        try {
-            Font customFont = Font.loadFont(new File("Resource/fonts/SIMFANG.TTF").toURI().toString(), 14);
-            if (customFont != null) {
-                Label contentLabel = new Label(contentText);
-                contentLabel.setFont(customFont);
-                alert.getDialogPane().setContent(contentLabel);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         ButtonType buttonTypeYes = new ButtonType("确定");
         ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
         
         alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+
+        try {
+            Font customFont = loadCustomFont("fonts/仿宋_GB2312.ttf", 14);
+            if (customFont != null) {
+                Label contentLabel = new Label(contentText);
+                contentLabel.setFont(customFont);
+                alert.getDialogPane().setContent(contentLabel);
+                
+                // 设置按钮字体
+                Button yesButton = (Button) alert.getDialogPane().lookupButton(buttonTypeYes);
+                if (yesButton != null) yesButton.setFont(customFont);
+                
+                Button noButton = (Button) alert.getDialogPane().lookupButton(buttonTypeNo);
+                if (noButton != null) noButton.setFont(customFont);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("字体加载失败", "无法加载仿宋字体，请检查 Resource/fonts/仿宋_GB2312.ttf 文件是否存在。");
+        }
         
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == buttonTypeYes) {
@@ -948,6 +962,48 @@ public class MainGameController {
         }
     }
 
+    @FXML
+    private void handleDraw() {
+        if (isGameOver) {
+            showAlert("提示", "游戏已结束。");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("确认和棋");
+        alert.setHeaderText(null);
+        String contentText = "确定要请求和棋吗？对方同意后游戏将以平局结束。";
+        alert.setContentText(contentText);
+
+        ButtonType buttonTypeYes = new ButtonType("确定");
+        ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+
+        try {
+            Font customFont = loadCustomFont("fonts/仿宋_GB2312.ttf", 14);
+            if (customFont != null) {
+                Label contentLabel = new Label(contentText);
+                contentLabel.setFont(customFont);
+                alert.getDialogPane().setContent(contentLabel);
+                
+                // 设置按钮字体
+                Button yesButton = (Button) alert.getDialogPane().lookupButton(buttonTypeYes);
+                if (yesButton != null) yesButton.setFont(customFont);
+                
+                Button noButton = (Button) alert.getDialogPane().lookupButton(buttonTypeNo);
+                if (noButton != null) noButton.setFont(customFont);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("字体加载失败", "无法加载仿宋字体，请检查 Resource/fonts/仿宋_GB2312.ttf 文件是否存在。");
+        }
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == buttonTypeYes) {
+            handleGameEndDraw("双方同意");
+        }
+    }
+
     /**
      * 处理因投降而结束的游戏
      * @param king 被"吃掉"的棋子（实际是投降方的帅或将）
@@ -960,9 +1016,11 @@ public class MainGameController {
         String victoryMessage = winner + "获胜 (" + loser + "投降)";
 
         victoryLabel.setText(victoryMessage);
+        victoryWatermarkLabel.setText("胜");
         
         // 移除所有可能的颜色样式
         victoryLabel.getStyleClass().removeAll("victory-title-red", "victory-title-black", "draw-title");
+        victoryWatermarkLabel.getStyleClass().removeAll("draw-watermark");
         replayButton.getStyleClass().removeAll("victory-button-red", "victory-button-black");
 
         // 根据获胜方设置样式
@@ -1073,7 +1131,7 @@ public class MainGameController {
 
     private void handleCheckEffect(String attackerColor) {
         checkAlertPane.setVisible(true);
-        checkAlertLabel.setText("将"); // 默认显示"将"
+        checkAlertLabel.setText("将军"); // Changed from "将"
         checkAlertLabel.getStyleClass().removeAll("check-alert-red", "check-alert-black");
 
         if (attackerColor.equals("RED")) {

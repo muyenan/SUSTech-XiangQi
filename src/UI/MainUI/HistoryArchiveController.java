@@ -404,12 +404,25 @@ public class HistoryArchiveController {
             alert.setHeaderText(null);
             
             String contentText = "确定要删除存档 \"" + selectedDisplayName + "\" 吗？此操作不可撤销。";
+            
+            ButtonType buttonTypeYes = new ButtonType("确定");
+            ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+            
+            alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+            
             try {
-                Font customFont = Font.loadFont(new File("Resource/fonts/SIMFANG.TTF").toURI().toString(), 14);
+                Font customFont = loadCustomFont("fonts/仿宋_GB2312.ttf", 14);
                 if (customFont != null) {
                     Label contentLabel = new Label(contentText);
                     contentLabel.setFont(customFont);
                     alert.getDialogPane().setContent(contentLabel);
+                    
+                    // 设置按钮字体
+                    Button yesButton = (Button) alert.getDialogPane().lookupButton(buttonTypeYes);
+                    if (yesButton != null) yesButton.setFont(customFont);
+                    
+                    Button noButton = (Button) alert.getDialogPane().lookupButton(buttonTypeNo);
+                    if (noButton != null) noButton.setFont(customFont);
                 } else {
                     alert.setContentText(contentText); // Fallback
                 }
@@ -417,11 +430,6 @@ public class HistoryArchiveController {
                 e.printStackTrace();
                 alert.setContentText(contentText); // Fallback
             }
-            
-            ButtonType buttonTypeYes = new ButtonType("确定");
-            ButtonType buttonTypeNo = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
-            
-            alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
             
             // 创建final变量供lambda表达式使用
             final GameArchiveManager.SaveFileInfo finalSelectedFileInfo = selectedFileInfo;

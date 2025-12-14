@@ -1,11 +1,8 @@
 package UI.loginUI;
 
 import UI.MainUI.MainLauncher;
-import UI.Models.AudioModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 
 import java.util.Random;

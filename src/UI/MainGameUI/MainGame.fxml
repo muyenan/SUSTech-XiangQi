@@ -43,7 +43,10 @@
                         <Button onAction="#handleSaveGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="保存游戏" />
                         <Button onAction="#handleLoadGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="加载存档" />
                         <Button onAction="#handleUndoMove" prefHeight="35" prefWidth="220" style="-fx-background-color: #a9a9a9; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="悔棋" />
-                        <Button onAction="#handleSurrender" prefHeight="35" prefWidth="220" style="-fx-background-color: #cd765c; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="投降" />
+                        <HBox alignment="CENTER" spacing="10">
+                            <Button onAction="#handleSurrender" prefHeight="35" prefWidth="105" style="-fx-background-color: #cd765c; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="投降" />
+                            <Button onAction="#handleDraw" prefHeight="35" prefWidth="105" style="-fx-background-color: #87CEEB; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="和棋" />
+                        </HBox>
                         <Button fx:id="BackMainButton" onAction="#handleBackToMenu" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" styleClass="game-button-medium" text="返回主界面" />
                     </VBox>
                     <HBox alignment="BOTTOM_RIGHT" prefHeight="8.0" prefWidth="280.0">
@@ -61,7 +64,7 @@
         <StackPane maxHeight="300" maxWidth="600" styleClass="victory-container">
             <VBox alignment="CENTER" spacing="25" styleClass="victory-inner-container">
                 <!-- Watermark -->
-                <Label styleClass="victory-watermark" text="胜" StackPane.alignment="CENTER" />
+                <Label fx:id="victoryWatermarkLabel" styleClass="victory-watermark" text="胜" StackPane.alignment="CENTER" />
                 <!-- Content -->
                 <VBox alignment="CENTER" spacing="30">
                     <VBox alignment="CENTER" spacing="5">
