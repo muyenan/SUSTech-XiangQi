@@ -44,15 +44,12 @@ public class MoveRuleValidator {
             return MoveValidationResult.INVALID_RULE;
         }
 
-        boolean wasKingInCheck = isKingInCheck(movingPiece.color, this.currentPieces);
-        boolean isKingInCheckAfterMove = isMoveCausingSelfCheck(movingPiece, endX, endY);
-
-        if (isKingInCheckAfterMove) {
-            if (wasKingInCheck) {
-                return MoveValidationResult.INVALID_RULE;
-            } else {
-                return MoveValidationResult.INVALID_SELF_CHECK;
-            }
+        // 检查当前是否被将军
+        boolean isCurrentlyInCheck = isKingInCheck(movingPiece.color, currentPieces);
+        
+        // 只有在未被将军时才检查是否会自毙
+        if (!isCurrentlyInCheck && isMoveCausingSelfCheck(movingPiece, endX, endY)) {
+            return MoveValidationResult.INVALID_SELF_CHECK;
         }
 
         return MoveValidationResult.VALID;
