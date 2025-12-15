@@ -50,7 +50,7 @@
             </HBox>
                 <Region prefHeight="20.0" />
                 <VBox alignment="CENTER" spacing="15">
-                    <Button fx:id="OnlineBattleButton" onAction="#handleOnlineBattle" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="联机对战" />
+                    <Button fx:id="AIBattleButton" onAction="#handleAIBattle" prefHeight="35" prefWidth="220" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="人机对战" />
                     <Button fx:id="QuickGameButton" onAction="#handleQuickGame" prefHeight="35" prefWidth="220" style="-fx-background-color: #d9a066; -fx-text-fill: white; -fx-background-radius: 8;" styleClass="game-button-large" text="快速游戏" />
                     <Button fx:id="HistoryButton" onAction="#handleHistory" prefHeight="35" prefWidth="220" style="-fx-background-color: #c0c0c0; -fx-text-fill: black; -fx-background-radius: 8;" styleClass="game-button-medium" text="历史存档" />
                <Hyperlink fx:id="LogOutLink" onAction="#handleLogOut" styleClass="hint-link" text="注销登录" />

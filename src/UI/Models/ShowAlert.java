@@ -14,7 +14,7 @@ public class ShowAlert {
 
         // 加载自定义字体
         try {
-            Font customFont = Font.loadFont(new File("Resource/fonts/SIMFANG.TTF").toURI().toString(), 14);
+            Font customFont = Font.loadFont(new File("Resource/fonts/仿宋GB2312.ttf").toURI().toString(), 14);
             if (customFont != null) {
                 // 创建一个Label并设置字体
                 Label contentLabel = new Label(message);

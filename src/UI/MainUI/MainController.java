@@ -5,9 +5,9 @@ import UI.Models.AudioModel;
 import UI.loginUI.LoginLauncher;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
@@ -16,6 +16,9 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static UI.Models.GetAppPath.getAppPath;
@@ -38,7 +41,7 @@ public class MainController {
     private Label LastLoginLabel;
 
     @FXML
-    private Button OnlineBattleButton;
+    private Button AIBattleButton;
 
     @FXML
     private Button QuickGameButton;
@@ -61,25 +64,40 @@ public class MainController {
     private final String MUTE_ICON = "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
 
     @FXML
-    private void handleOnlineBattle() {
-        try {
-            System.out.println("加载联机对战界面");
-            showAlert("提示", "联机对战功能暂未开放。");
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("未知错误", "请联系管理员!");
-        }
+    private void handleAIBattle() {
+        List<String> choices = Arrays.asList("简单", "中等", "困难");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("中等", choices);
+        dialog.setTitle("人机对战");
+        dialog.setHeaderText("请选择人机难度");
+        dialog.setContentText("难度:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(difficulty -> {
+            try {
+                System.out.println("加载人机对战界面，难度：" + difficulty);
+
+                Stage currentStage = (Stage) AIBattleButton.getScene().getWindow();
+                currentStage.close();
+
+                MainGameLauncher gameLauncher = new MainGameLauncher(username, sessionIdentifier, lastLoginTime, "AI", difficulty);
+                gameLauncher.showMainGameWindow();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                showAlert("未知错误", "请联系管理员!");
+            }
+        });
     }
 
     @FXML
     private void handleQuickGame() {
         try {
-            System.out.println("加载快速对战界面"); // 修正拼写错误
+            System.out.println("加载快速对战界面");
             Stage currentStage = (Stage) QuickGameButton.getScene().getWindow();
             currentStage.close();
 
-            MainGameLauncher gameLauncher = new MainGameLauncher(username, sessionIdentifier, lastLoginTime);
-            gameLauncher.showMainGameWindow(); // 修正方法名
+            MainGameLauncher gameLauncher = new MainGameLauncher(username, sessionIdentifier, lastLoginTime, "Local", null);
+            gameLauncher.showMainGameWindow();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -259,7 +277,7 @@ public class MainController {
 
         SVGPath svg = new SVGPath();
         svg.setContent(isMuted ? MUTE_ICON : SOUND_ICON);
-        // 设置颜色为深棕色以匹配你的主题 (#8b4513)，或者黑色 Color.BLACK
+        // 设置颜色为深棕色
         svg.setFill(Color.web("#8b4513"));
         svg.setScaleX(1.5); // 图标放大倍数
         svg.setScaleY(1.5);

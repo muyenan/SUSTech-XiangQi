@@ -17,6 +17,8 @@ public class MainGameLauncher {
     private String loadedFileName;
     private String lastLoginTime;
     private List<GameMove> gameMoves; // 新增，用于从特定状态启动
+    private String gameMode; // "AI" or "Local"
+    private String difficulty; // "Easy", "Medium", "Hard"
 
     public MainGameLauncher() {
         // 默认构造函数
@@ -40,10 +42,12 @@ public class MainGameLauncher {
         this.loadedFileName = loadedFileName;
     }
     
-    public MainGameLauncher(String username, String sessionIdentifier, String lastLoginTime) {
+    public MainGameLauncher(String username, String sessionIdentifier, String lastLoginTime, String gameMode, String difficulty) {
         this.username = username;
         this.sessionIdentifier = sessionIdentifier;
         this.lastLoginTime = lastLoginTime;
+        this.gameMode = gameMode;
+        this.difficulty = difficulty;
     }
 
     // 新增构造函数：从特定棋局状态启动
@@ -52,6 +56,12 @@ public class MainGameLauncher {
         this.sessionIdentifier = sessionIdentifier;
         this.loadedData = new GameArchiveManager.GameArchiveData(pieces, moves, currentPlayerColor);
         this.gameMoves = moves;
+    }
+    
+    // 新增方法：设置游戏模式
+    public void setGameMode(String gameMode, String difficulty) {
+        this.gameMode = gameMode;
+        this.difficulty = difficulty;
     }
 
     public void showMainGameWindow() {
@@ -71,6 +81,9 @@ public class MainGameLauncher {
         // 获取控制器并初始化用户信息
         MainGameController controller = loader.getController();
         if (controller != null) {
+            if (gameMode != null && difficulty != null) {
+                controller.setGameMode(gameMode, difficulty);
+            }
             // 如果有加载的数据，则传递给控制器
             if (loadedData != null) {
                 if (loadedFileName != null && !loadedFileName.isEmpty()) {

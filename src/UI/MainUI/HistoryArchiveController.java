@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
 
 import static UI.MainUI.MainController.getSessionIdentifier;
 import static UI.MainUI.MainController.getUserName;
@@ -362,17 +363,70 @@ public class HistoryArchiveController {
         if (selectedFileInfo != null) {
             GameArchiveManager.GameArchiveData loadedData = archiveManager.loadGame(selectedFileInfo.getFileName());
             if (loadedData != null) {
-                // 关闭当前窗口
-                Stage stage = (Stage) startGameButton.getScene().getWindow();
-                stage.close();
-                
-                // 启动游戏并加载存档
-                try {
-                    MainGameLauncher gameLauncher = new MainGameLauncher(currentUserName, sessionIdentifier, loadedData, selectedFileInfo.getFileName());
-                    gameLauncher.showMainGameWindow();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    showAlert("错误", "无法启动游戏: " + e.getMessage());
+                // 检查是否为人机对战存档
+                if (selectedFileInfo.getFileName().startsWith("人机_")) {
+                    // 弹出选择对话框，让用户选择继续人机对战还是普通游戏
+                    Alert choiceAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    choiceAlert.setTitle("游戏模式选择");
+                    choiceAlert.setHeaderText(null);
+                    choiceAlert.setContentText("检测到这是一个人机对战存档，您希望：");
+                    
+                    ButtonType aiButtonType = new ButtonType("继续人机对战", ButtonBar.ButtonData.YES);
+                    ButtonType localButtonType = new ButtonType("改为普通游戏", ButtonBar.ButtonData.NO);
+                    ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    
+                    choiceAlert.getButtonTypes().setAll(aiButtonType, localButtonType, cancelButtonType);
+                    
+                    Optional<ButtonType> choiceResult = choiceAlert.showAndWait();
+                    if (!choiceResult.isPresent() || choiceResult.get() == cancelButtonType) {
+                        return; // 用户取消操作
+                    }
+                    
+                    String gameMode = null;
+                    String difficulty = null;
+                    if (choiceResult.get() == aiButtonType) {
+                        gameMode = "AI";
+                        // 从文件名中提取难度信息，如果不存在则默认为"中等"
+                        String fileName = selectedFileInfo.getFileName();
+                        if (fileName.contains("简单")) {
+                            difficulty = "简单";
+                        } else if (fileName.contains("困难")) {
+                            difficulty = "困难";
+                        } else {
+                            difficulty = "中等"; // 默认设置为中等难度
+                        }
+                    }
+                    // 如果选择localButtonType，则gameMode和difficulty保持为null，即普通游戏
+                    
+                    // 关闭当前窗口
+                    Stage stage = (Stage) startGameButton.getScene().getWindow();
+                    stage.close();
+                    
+                    // 启动游戏并加载存档
+                    try {
+                        MainGameLauncher gameLauncher = new MainGameLauncher(currentUserName, sessionIdentifier, loadedData, selectedFileInfo.getFileName());
+                        if (gameMode != null) {
+                            // 如果选择了人机对战模式，设置游戏模式
+                            gameLauncher.setGameMode(gameMode, difficulty);
+                        }
+                        gameLauncher.showMainGameWindow();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        showAlert("错误", "无法启动游戏: " + e.getMessage());
+                    }
+                } else {
+                    // 关闭当前窗口
+                    Stage stage = (Stage) startGameButton.getScene().getWindow();
+                    stage.close();
+                    
+                    // 启动游戏并加载存档
+                    try {
+                        MainGameLauncher gameLauncher = new MainGameLauncher(currentUserName, sessionIdentifier, loadedData, selectedFileInfo.getFileName());
+                        gameLauncher.showMainGameWindow();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        showAlert("错误", "无法启动游戏: " + e.getMessage());
+                    }
                 }
             } else {
                 showAlert("错误", "加载失败，可能文件已损坏或密钥错误！");

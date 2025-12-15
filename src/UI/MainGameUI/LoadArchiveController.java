@@ -19,9 +19,13 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.geometry.VPos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
 
 import java.io.*;
 import java.util.List;
+import java.util.Optional;
 
 import java.io.InputStream;
 
@@ -325,9 +329,51 @@ public class LoadArchiveController {
         if (selectedFileInfo != null) {
             GameArchiveManager.GameArchiveData loadedData = archiveManager.loadGame(selectedFileInfo.getFileName());
             if (loadedData != null) {
-                // 将数据传递回主游戏控制器
-                if (mainGameController != null) {
-                    mainGameController.loadGameData(loadedData, selectedFileInfo.getFileName());
+                // 检查是否为人机对战存档
+                if (selectedFileInfo.getFileName().startsWith("人机_")) {
+                    // 弹出选择对话框，让用户选择继续人机对战还是普通游戏
+                    Alert choiceAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    choiceAlert.setTitle("游戏模式选择");
+                    choiceAlert.setHeaderText(null);
+                    choiceAlert.setContentText("检测到这是一个人机对战存档，您希望：");
+                    
+                    ButtonType aiButtonType = new ButtonType("继续人机对战", ButtonBar.ButtonData.YES);
+                    ButtonType localButtonType = new ButtonType("改为普通游戏", ButtonBar.ButtonData.NO);
+                    ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    
+                    choiceAlert.getButtonTypes().setAll(aiButtonType, localButtonType, cancelButtonType);
+                    
+                    Optional<ButtonType> choiceResult = choiceAlert.showAndWait();
+                    if (!choiceResult.isPresent() || choiceResult.get() == cancelButtonType) {
+                        return; // 用户取消操作
+                    }
+                    
+                    if (choiceResult.get() == aiButtonType) {
+                        // 从文件名中提取难度信息，如果不存在则默认为当前难度
+                        String fileName = selectedFileInfo.getFileName();
+                        String difficulty = "中等"; // 默认设置为中等难度
+                        if (fileName.contains("简单")) {
+                            difficulty = "简单";
+                        } else if (fileName.contains("困难")) {
+                            difficulty = "困难";
+                        }
+                        
+                        // 设置人机对战模式
+                        if (mainGameController != null) {
+                            mainGameController.setGameMode("AI", difficulty);
+                            mainGameController.loadGameData(loadedData, selectedFileInfo.getFileName());
+                        }
+                    } else {
+                        // 改为普通游戏模式
+                        if (mainGameController != null) {
+                            mainGameController.loadGameData(loadedData, selectedFileInfo.getFileName());
+                        }
+                    }
+                } else {
+                    // 将数据传递回主游戏控制器
+                    if (mainGameController != null) {
+                        mainGameController.loadGameData(loadedData, selectedFileInfo.getFileName());
+                    }
                 }
                 
                 // 关闭当前窗口

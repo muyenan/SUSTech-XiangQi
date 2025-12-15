@@ -36,23 +36,23 @@ public class MoveRuleValidator {
         }
         ChessPiece movingPiece = movingPieceOpt.get();
 
-        Optional<ChessPiece> targetPieceOpt = getPieceAt(endX, endY);
-        if (targetPieceOpt.isPresent() && targetPieceOpt.get().color.equals(movingPiece.color)) {
-            return MoveValidationResult.INVALID_RULE;
-        }
-
         if (endX < 0 || endX >= COLS || endY < 0 || endY >= ROWS) {
             return MoveValidationResult.INVALID_RULE;
         }
 
-        boolean isRuleValid = isSimpleValidMove(startX, startY, endX, endY);
-
-        if (!isRuleValid) {
+        if (!isSimpleValidMove(startX, startY, endX, endY)) {
             return MoveValidationResult.INVALID_RULE;
         }
 
-        if (isMoveCausingSelfCheck(movingPiece, endX, endY)) {
-            return MoveValidationResult.INVALID_SELF_CHECK;
+        boolean wasKingInCheck = isKingInCheck(movingPiece.color, this.currentPieces);
+        boolean isKingInCheckAfterMove = isMoveCausingSelfCheck(movingPiece, endX, endY);
+
+        if (isKingInCheckAfterMove) {
+            if (wasKingInCheck) {
+                return MoveValidationResult.INVALID_RULE;
+            } else {
+                return MoveValidationResult.INVALID_SELF_CHECK;
+            }
         }
 
         return MoveValidationResult.VALID;

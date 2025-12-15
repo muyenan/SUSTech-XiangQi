@@ -60,7 +60,15 @@ public class GameArchiveManager {
         return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 
+    public boolean saveGame(ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor, boolean isAIGame) {
+        return saveGame(pieces, moves, currentPlayerColor, isAIGame, null);
+    }
+
     public boolean saveGame(ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor) {
+        return saveGame(pieces, moves, currentPlayerColor, false, null);
+    }
+
+    public boolean saveGame(ChessPiece[] pieces, List<GameMove> moves, String currentPlayerColor, boolean isAIGame, String difficulty) {
         if (encryptionKeyBasis == null || encryptionKeyBasis.isEmpty()) {
             System.err.println("存档失败：加密密钥基础 (密码哈希) 为空。");
             return false;
@@ -72,7 +80,12 @@ public class GameArchiveManager {
             dirFile.mkdirs();
         }
 
-        String fileName = "save_" + System.currentTimeMillis() + ".json";
+        // 构造文件名，包含游戏模式和难度信息
+        String prefix = isAIGame ? "人机" : "save";
+        if (isAIGame && difficulty != null && !difficulty.isEmpty()) {
+            prefix += "_" + difficulty;
+        }
+        String fileName = prefix + "_" + System.currentTimeMillis() + ".json";
         File saveFile = new File(saveDir, fileName);
 
         // 创建存档数据对象
@@ -110,7 +123,7 @@ public class GameArchiveManager {
 
             String jsonText = decrypt(encryptedData);
             Gson gson = new Gson();
-            
+
             return gson.fromJson(jsonText, GameArchiveData.class);
 
         } catch (Exception e) {
@@ -123,7 +136,7 @@ public class GameArchiveManager {
         File saveDir = new File(getUserSaveDir(username));
         if (!saveDir.exists()) return new ArrayList<>();
 
-        File[] files = saveDir.listFiles((dir, name) -> name.endsWith(".json") && name.startsWith("save_"));
+        File[] files = saveDir.listFiles((dir, name) -> name.endsWith(".json") && (name.startsWith("save_") || name.startsWith("人机_")));
 
         if (files == null) return new ArrayList<>();
 
@@ -177,7 +190,8 @@ public class GameArchiveManager {
 
         public String getDisplayName() {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            return "存档时间: " + sdf.format(new Date(timestamp));
+            String prefix = fileName.startsWith("人机_") ? "[人机对战] " : "";
+            return prefix + "存档时间: " + sdf.format(new Date(timestamp));
         }
     }
 
